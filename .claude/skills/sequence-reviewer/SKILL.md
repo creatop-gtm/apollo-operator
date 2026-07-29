@@ -3,7 +3,7 @@ name: sequence-reviewer
 description: "Review a drafted cold email sequence for spam and deliverability risks (firm) and copy craft (suggestions). Advisory, never blocks. Use before building or activating a sequence."
 ---
 
-# Sequence Reviewer (Level 3)
+# Sequence Reviewer (Message)
 
 Read a drafted sequence and tell the operator what will hurt it before it sends. Advice, not a gate: you flag, you recommend, the operator decides. Split findings into what genuinely damages deliverability (be firm) and what is a copy or taste call (suggest, do not insist).
 

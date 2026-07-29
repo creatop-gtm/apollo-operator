@@ -3,7 +3,7 @@ name: apollo-signals
 description: "Find the reason to reach out now. Offer-fit signal discovery, not a universal heat score. Use to identify and act on buying signals for a specific offer on Apollo."
 ---
 
-# Apollo Signals
+# Apollo Signals (cross-cutting)
 
 Find the reason to reach out now. This skill is deliberately not a universal list of "buying signals" with a heat score. That approach treats every signal as equally valuable, and it is not.
 
@@ -38,11 +38,25 @@ Every signal below works as a **search filter** in people or company search, whi
 
 Some of these are labeled advanced filters and can return an upgrade-required error on free Apollo plans (all worked on the paid plan we tested). If one errors, it is gated on your plan, fall back to another signal.
 
+### Website visitors (moved out of the UI, now filterable)
+
+**This used to be UI-only and no longer is.** If your team has the Apollo tracking script installed and Website Visitors access, `apollo_mixed_companies_search` will filter to companies that visited *your* site:
+
+- `website_visitors_from_domains` — your own tracked domains.
+- `website_visitors_from_past` — 1, 7, 15, 30, 60, or 90 days.
+- `website_visitors_domain_pages` / `..._exact_pages` — filter to who hit a specific path, for example `/pricing`.
+- `website_visitors_intent` — Apollo's computed low / medium / high from visit behaviour.
+- `web_page_view_counts` — **requires `website_visitors_from_past`**, because page views are only stored as time-windowed aggregates. Without a window it is silently ignored.
+- `show_new_companies_only` — first-time visitors only.
+
+`apollo_organizations_enrich` also returns `website_intent`, `website_last_visit`, `website_unique_visitors`, and `website_total_visits` for teams with access.
+
+This is the strongest offer-fit signal in the menu, because someone reading your pricing page has already told you what they want. It also needs no guessing: it is your own data. Gated on having the tracking script installed, so ask before promising it.
+
 ## What still lives in Apollo's UI only
 
 Worth knowing, but the MCP cannot execute these (see `../operator-context/references/apollo-kb-map.md`):
 
-- **Website visitors:** Apollo can identify companies visiting your site, and its Chrome extension gives open tracking in Gmail. Visiting your pricing page is a real signal.
 - **Search alerts:** save a search and get alerted when new people match it. A standing signal feed.
 - **Workflows:** Apollo automates signal-to-action in the UI (Hit New Hires, Hit Recently Funded, Reach Website Visitors, Spot Companies Hiring for Specific Roles). Point the operator here; the MCP does not build workflows.
 - **Buyer-intent topics:** company results carry `show_intent` and `intent_strength` inline, but filtering by intent topic is UI or plan gated.
@@ -50,9 +64,9 @@ Worth knowing, but the MCP cannot execute these (see `../operator-context/refere
 
 ## How signals feed the rest
 
-- **Into targeting (Level 1 and 2):** a good signal becomes a scoring rule or a filter, so it sharpens the list.
-- **Into prioritization (Level 5):** signal-matched leads are your High-priority tier, worked first.
-- **Into copy (Level 3):** the signal is often the opener. "Saw you're exhibiting at X" is a better first line than anything generic.
+- **Into targeting (Targeting and 2):** a good signal becomes a scoring rule or a filter, so it sharpens the list.
+- **Into prioritization (Iterate):** signal-matched leads are your High-priority tier, worked first.
+- **Into copy (Message):** the signal is often the opener. "Saw you're exhibiting at X" is a better first line than anything generic.
 
 ## No benchmarks
 

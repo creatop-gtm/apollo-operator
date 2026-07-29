@@ -3,7 +3,7 @@ name: positive-reply-scoring
 description: "Classify replies and compute positive reply rate, the metric that predicts revenue. Use to tell whether a campaign is actually working, not just getting replies."
 ---
 
-# Positive Reply Scoring (Level 5)
+# Positive Reply Scoring (Iterate)
 
 Reply rate tells you people are paying attention. Positive reply rate tells you they want what you are selling. This computes the second, because it is the number that actually predicts revenue.
 

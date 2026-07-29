@@ -3,7 +3,7 @@ name: apollo-multichannel
 description: "Optional layer on top of email: add LinkedIn, call, and manual steps to an Apollo sequence and work the task queue they create. Apollo automates email only; the rest are human tasks. Use to run multichannel outbound on Apollo."
 ---
 
-# Apollo Multichannel (optional)
+# Apollo Multichannel (Message, optional)
 
 Email is the automated core of this library. This skill is the optional layer on top: add LinkedIn, call, and manual steps to a sequence, and work the task queue those steps create. It is opt-in on two levels. You do not have to add multichannel steps to a sequence, and you do not have to use this skill at all. A clean email-only sequence is a complete, valid campaign.
 
@@ -37,7 +37,7 @@ A sensible, non-annoying default cadence (relative `wait_time`, so Day 0/2/3/5/8
 4. `linkedin_step_message`, wait 2 (only fires if they connected; write it like a human)
 5. `call`, wait 3, `priority: high`, `note` = a two-line call script
 
-Rules that carry over: still build the sequence `active: false`, still let a human activate it, still keep the email copy to the Level 3 standard. LinkedIn and call steps do not change any of that.
+Rules that carry over: still build the sequence `active: false`, still let a human activate it, still keep the email copy to the Message standard. LinkedIn and call steps do not change any of that.
 
 ## LinkedIn safety: you set the daily cap, Apollo does not
 
@@ -61,10 +61,51 @@ The steps above (and any standalone tasks) create tasks a person clears each day
 
 A good habit: batch by channel so you are not context-switching per lead, which is what makes multichannel feel like a slog. One caveat, and it matters: calls and manual emails are fine to work in a single focused sitting, but LinkedIn connection requests are not. Pace those across days per the cap above, never clear the whole LinkedIn queue in one session. So batch calls, but trickle LinkedIn. This slots into `../weekly-rhythm`.
 
+## Part C: one-off emails (sending to a single person)
+
+Not everything belongs in a sequence. A referral introduction, a reply to someone who reached out, a single high-value prospect worth a hand-written note, a follow-up after a call: these are one email to one person, and Apollo sends them properly.
+
+```
+apollo_emailer_messages_create   → drafts it (contact_id, subject, body_html)
+apollo_emailer_messages_send_now → sends it (needs the sender mailbox)
+apollo_emailer_messages_email_send_status → confirms delivery
+```
+
+Three reasons to send it through Apollo rather than from your own inbox:
+
+1. **It is logged against the contact.** The email becomes part of that person's record instead of disappearing into a personal sent folder, so the next person to touch the account can see it.
+2. **It sends from a real mailbox** you choose, with the same sending rules and pacing as everything else.
+3. **You get a delivery answer.** `email_send_status` returns `completed` or `failed`, and on failure gives `not_sent_reason` and `failure_reason` (bounce, quota, spam block).
+
+### Delivery is not opens: two different endpoints
+
+These get conflated constantly, so be precise:
+
+| Question | Call | Gives |
+|---|---|---|
+| Did it arrive? | `apollo_emailer_messages_email_send_status` | `completed` / `failed`, plus `not_sent_reason` and `failure_reason` on failure |
+| Did they open or click it? | `GET /emailer_messages/{id}/activities` ("Check Email Stats", REST) | Open and click activity |
+| What have we sent them? | `GET /emailer_messages/search` (REST) | Sent outreach history |
+
+Only the first is on MCP. The other two are REST, so lane 3 or 4.
+
+**And open tracking has a cost this library normally refuses to pay.** It works by embedding a tracking pixel, which hurts deliverability and is increasingly stripped or pre-fetched by mail providers anyway, which makes the number unreliable as well as expensive. That is why cold campaigns here run with `open_tracking: false`.
+
+So: **delivery confirmation always, open tracking only when you deliberately accept the trade.** For a warm one-off to someone expecting to hear from you, that trade is far more defensible than for a cold campaign. Never turn pixels on for cold just to get a nicer dashboard.
+
+Practical notes:
+
+- `contact_id` is required, so the person must exist as a contact first. Enrich and create them (List) before you can email them.
+- You can override `recipients` to add cc, bcc, or send to a non-contact address, while the message stays attached to the contact record. Useful for looping in a colleague on an intro.
+- The draft-then-send split exists so a human can approve. If the operator has already confirmed recipient, subject, and body, run both calls back to back; from their side it is one action.
+- Keep it short. The tool's own guidance is 25 to 85 words and one clear ask, which matches this library's copy rules.
+
+**This still sends a real email.** Same rule as everything else: show recipient, subject, and body, and wait for an explicit yes.
+
 ## Common mistakes
 
 - **Saying Apollo "sends" the LinkedIn message or "makes" the call.** It queues a task. A human acts.
-- **Turning every lead into a five-channel gauntlet.** Reserve calls and LinkedIn for High-priority leads (from Level 2 scoring or a signal match). Blanket multichannel is just more noise, faster.
+- **Turning every lead into a five-channel gauntlet.** Reserve calls and LinkedIn for High-priority leads (from List scoring or a signal match). Blanket multichannel is just more noise, faster.
 - **Clearing the LinkedIn queue in one sitting.** Apollo does not cap invites, so you have to. Keep new connection requests under 30 a day, 20 to be safe, and trickle them across days. A week's invites fired off in one afternoon is the exact burst LinkedIn flags.
 - **A task with no association.** `contact_id`, `account_id`, or `opportunity_id` is required, or the create fails.
 - **Forgetting these are gated.** If task-function steps error, it is your Apollo plan, not your setup. Fall back to email-only.

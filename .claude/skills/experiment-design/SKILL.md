@@ -3,7 +3,7 @@ name: experiment-design
 description: "Design single-variable outbound experiments (list-only, copy-only, combined) so you learn what actually works. Use to improve a campaign deliberately."
 ---
 
-# Experiment Design (Level 5)
+# Experiment Design (Iterate)
 
 If you change the list, the copy, and the offer at once, and it works, you learn nothing, because you cannot say what worked. This forces one variable per experiment so you actually learn.
 

@@ -3,11 +3,11 @@ name: apollo-deliverability
 description: "Protect the sending asset on Apollo: mailbox health, warmup, volume limits, bounce and incident response, sending schedule. Use before launching and whenever deliverability looks off."
 ---
 
-# Apollo Deliverability & Send (Level 4)
+# Apollo Deliverability & Send (Infrastructure)
 
 Keep the sending asset alive. Deliverability is the one place this library is firm rather than advisory, because a burned domain hurts the operator and does not come back quickly. Everything here protects the machine that makes outbound possible.
 
-This level assumes the sending stack already exists. If you have no dedicated domains or mailboxes yet, build them first with `sending-infrastructure` (Level 4 · Setup), then come back here to keep them healthy.
+This level assumes the sending stack already exists. If you have no dedicated domains or mailboxes yet, build them first with `sending-infrastructure` (Infrastructure), then come back here to keep them healthy.
 
 ## When to use
 

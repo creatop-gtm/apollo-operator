@@ -3,7 +3,7 @@ name: list-quality-scorecard
 description: "Check a lead list before it goes into a sequence. Gives a deliverability readout (firm) and a targeting readout (advisory). Surfaces issues, never blocks. Use before enrolling any list."
 ---
 
-# List Quality Scorecard (Level 2)
+# List Quality Scorecard (List)
 
 Check a lead list before it goes into a sequence, and tell the operator what is worth knowing. This is advice, not a gate. The operator always decides whether to send.
 

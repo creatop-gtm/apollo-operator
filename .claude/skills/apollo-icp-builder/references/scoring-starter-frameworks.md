@@ -38,7 +38,7 @@ Most useful signals fall into one of these. Pick from the lens that fits the off
 For every signal you pick, decide how it gets applied:
 
 - **Filter signal:** it maps to a native Apollo field, so it narrows the search itself. See `apollo-search-reference.md`. Example: "has a real sales team" to `organization_department_or_subdepartment_counts: {master_sales: {min: 5}}`.
-- **Research signal:** it needs a look at the company (pricing page, product line, positioning). Claude reads the site and tags the record at list time (Level 2). Write the decision rule plainly: "score up if the site has a public pricing page."
+- **Research signal:** it needs a look at the company (pricing page, product line, positioning). Claude reads the site and tags the record at list time (List). Write the decision rule plainly: "score up if the site has a public pricing page."
 
 ## What not to do
 

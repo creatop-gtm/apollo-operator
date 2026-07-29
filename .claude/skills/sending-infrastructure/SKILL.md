@@ -3,9 +3,9 @@ name: sending-infrastructure
 description: "Build the sending stack from zero before you send: dedicated domains separate from your primary, mailboxes, SPF/DKIM/DMARC/MX, redirect, and warmup. Includes the volume math (mailboxes and domains per daily send target). Use for first-time setup or when scaling adds mailboxes."
 ---
 
-# Sending Infrastructure (Level 4 · Setup)
+# Sending Infrastructure (Infrastructure)
 
-Build the sending stack before you send a single email: dedicated domains, mailboxes, DNS, and warmup, all separate from your primary domain. `apollo-deliverability` (Level 4) keeps this asset alive. This skill creates it in the first place. If you have no dedicated domains or mailboxes yet, start here, because everything downstream assumes they exist.
+Build the sending stack before you send a single email: dedicated domains, mailboxes, DNS, and warmup, all separate from your primary domain. `apollo-deliverability` (Infrastructure) keeps this asset alive. This skill creates it in the first place. If you have no dedicated domains or mailboxes yet, start here, because everything downstream assumes they exist.
 
 ## When to use
 
@@ -54,7 +54,7 @@ Buy domains that are clearly the same brand, so the redirect and the from-name r
 Two acquisition paths, pick one:
 
 - **Do it yourself at a registrar** (Cloudflare, Namecheap, Google Domains, and similar). Most control, lowest cost, more setup work. You buy the domains, set DNS by hand (Step 3), and connect mailboxes (Step 4).
-- **Buy provisioned domains and mailboxes.** Apollo offers paid domain-and-mailbox provisioning inside its own UI (the MCP cannot trigger the purchase, only read what you already bought, see Step 6). Third-party mailbox providers sell the same thing: pre-configured domains and inboxes with DNS handled for you. Zapmail and Mailpool are two common ones. Less control, less setup, a monthly cost. Good when you want to move fast.
+- **Buy provisioned domains and mailboxes.** Apollo sells domain-and-mailbox provisioning, and **the MCP can now purchase mailboxes directly** (see Step 6). Third-party providers sell the same thing. Third-party mailbox providers sell the same thing: pre-configured domains and inboxes with DNS handled for you. Zapmail and Mailpool are two common ones. Less control, less setup, a monthly cost. Good when you want to move fast.
 
 Either way, the requirements in Steps 3 to 5 are the same. Provisioned just means someone else does Step 3 for you.
 
@@ -85,9 +85,26 @@ Warmup runs on every mailbox before it sends anything cold, and it never turns o
 
 The clock starts the day warmup starts. This is why Step 1's "build it three weeks early" matters: the infrastructure has to sit and warm while you build the list and the sequence.
 
-## Step 6: verify with the MCP (what Apollo can and cannot do)
+## Step 6: provision and verify with the MCP
 
-The MCP does not buy domains, provision mailboxes, or set DNS. It **reads and verifies** what exists, which is exactly the preflight `apollo-go-live` and Level 4 depend on:
+**This changed.** The MCP used to be read-only on infrastructure. It can now **purchase mailboxes** on a domain your team already owns, which means an agent can stand up part of the sending stack rather than only inspect it.
+
+### Purchasing mailboxes (`apollo_email_account_purchase_create`)
+
+Real money, real provisioning, and irreversible from the tool. Treat it with the same ceremony as sending email.
+
+1. Call `apollo_domain_purchase_index` first to get a `domain_purchase_id`. **A mailbox can only be provisioned on a domain the team already owns**, and the mailbox address must match that domain. Never guess the id.
+2. Pick a type. Cost per mailbox, in unified credits: **shared 300 · google 800 · outlook 1500.** All mailboxes in one request must share a type, so the total is always count × per-type cost. Legacy export-credit teams pay roughly a fifth of that.
+3. **Say the confirmation exactly as the tool requires**, with real numbers: "Purchasing [N] [type] mailbox(es) will consume [N × cost] credits. Do you want to proceed?" Do not paraphrase it, and do not proceed without an explicit yes.
+4. Provisioning is asynchronous. New mailboxes start `pending_setup` and become `active`. Poll `apollo_email_account_purchase_index`.
+
+Two things the MCP still cannot do: **buy domains**, and **set DNS**. Those remain manual, so Steps 3 to 5 do not go away.
+
+**Do the arithmetic before you suggest this.** Three google mailboxes is 2,400 credits, which on a 4,000-credit plan is most of a month's enrichment budget. Buying mailboxes and enriching a list compete for the same pool, and an operator who does not realise that will run out mid-campaign. Apply the 85% rule from `apollo-list-builder`.
+
+### Verifying what exists
+
+The read paths are unchanged, and they are the preflight `apollo-go-live` depends on:
 
 - `apollo_domain_purchase_index`: for domains provisioned through Apollo, returns each domain's SPF, DKIM, and DMARC diagnostics plus the mailboxes on it. Use it to confirm DNS is actually passing before you send, not to guess.
 - `apollo_email_account_purchase_index`: lists Apollo-provisioned mailboxes and their status (`pending_setup`, `active`, `inactive`). A mailbox in `pending_setup` is not ready. Do not enroll it.
@@ -97,7 +114,7 @@ If you built the stack yourself at a registrar, the DNS diagnostics live at your
 
 ## Output and handoff
 
-A sending stack that is: separate from the primary domain, correct on SPF, DKIM, DMARC, and MX, redirecting to the main site, and warmed for at least 14 days. Once it passes, `apollo-deliverability` (Level 4) maintains it, and `apollo-go-live` uses it to send. Until it passes, nothing goes out.
+A sending stack that is: separate from the primary domain, correct on SPF, DKIM, DMARC, and MX, redirecting to the main site, and warmed for at least 14 days. Once it passes, `apollo-deliverability` (Infrastructure) maintains it, and `apollo-go-live` uses it to send. Until it passes, nothing goes out.
 
 ## Common mistakes
 

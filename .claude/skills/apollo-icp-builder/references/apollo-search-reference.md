@@ -47,7 +47,7 @@ These are how you express many "signals" as native filters instead of guesswork.
 
 ## Gotchas
 
-- **Search returns no emails.** People search is for finding, not contacting. Emails (and unmasking last names) come from enrichment at Level 2 (`apollo_people_bulk_match`). Masked last names in search are expected and do not block enrichment.
+- **Search returns no emails.** People search is for finding, not contacting. Emails (and unmasking last names) come from enrichment at List (`apollo_people_bulk_match`). Masked last names in search are expected and do not block enrichment.
 - **50,000-record display ceiling** (100 per page, 500 pages). If your search exceeds this, it is too broad regardless. Add filters.
 - **Company search costs 1 credit** per call that returns results (0 if no matches). Confirm first, verbatim: "This will consume 1 credit. Do you want to proceed?" People search is for prospecting net-new people.
 - **Some filters are plan-gated** (e.g. department counts, founded-year, headcount growth). Free plans get an upgrade-required error; note it and move on.
