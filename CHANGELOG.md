@@ -5,14 +5,16 @@ All notable changes to Apollo Operator are documented here. This project uses
 
 ## v1.3.0 — 2026-08-31
 
-The surface re-check. Everything in v1.2 was true when we shipped it; five weeks later some
-of it was not. This release re-ran the audit against a newer CLI and a wider MCP surface, then
-took the whole motion live on our own account: an angle built on filters the CLI still cannot
-express, a thousand records enriched, independently verified, uploaded as a real Apollo list,
-and a sequence written, built, and activated. Nine shipped claims were wrong. They are corrected
-here, with dates, so you can tell what moved and when. Still 17 skills.
+**Call intelligence, credit control, and verify-first lists.** Three new capabilities, all of
+which make a campaign cheaper to build and more likely to land: your own recorded calls become
+the best research source you have, credit spend gets predictable and much lower, and
+verification moves ahead of copywriting so you never personalise an address that cannot receive
+mail. Everything here came from taking the full motion live on our own account, and five claims
+that moved under us since v1.2 are corrected with dates. Still 17 skills.
 
-### Corrected
+### Kept current
+
+Five things moved under us since v1.2. Corrected with dates, so you can tell what changed and when.
 
 - **The flagship MCP-only filter example moved to NAICS.** `--department-headcount` landed in
   Apollo CLI v2.1.0. Eight of the nine filters we listed remain CLI-less, and a new MCP-only
@@ -55,7 +57,7 @@ here, with dates, so you can tell what moved and when. Still 17 skills.
 - **Follow-up craft**: how the greeting tightens across a thread, and the four things to cut from
   every follow-up.
 
-### Warnings you should read before your next launch
+### Read these before your next launch
 
 - **Bulk contact creation does not deduplicate**, despite documenting that it does. Records per
   email equal submissions per email. Never retry on a timeout, and dedupe your own payload.
