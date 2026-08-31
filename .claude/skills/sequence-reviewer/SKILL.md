@@ -22,8 +22,14 @@ Read a drafted sequence and tell the operator what will hurt it before it sends.
 
 ### Structure and voice (recommend, this is craft)
 - **3 steps, 2 variations each.** Day 0, Day 3, Day 7, delays relative to the previous step.
-- **60 to 90 words per email**, step 3 the shortest.
+- **Word count by step: 60 to 75 for step 1, 45 to 60 for step 2, 55 to 75 for step 3.** Step 2 is the lightest touch, not step 3. Step 3 runs longer because it carries the routing question *and* the lower-commitment fallback. (Corrected v1.3 from "step 3 the shortest", which was wrong.)
 - **One CTA, soft.** One focus per email: outcome or mechanism, not both.
+- **Never "quick call", and flag it as a rule rather than a preference.** Also "hop on a call", "quick chat", "quick sync", "jump on a call". "Quick" is the sender pre-apologising for their own ask: it signals the request is an imposition, and it is not believable anyway. Minimising the ask makes it easier to decline. Replace with a real number or a question about interest: "Worth 15 minutes?", "Worth a look?", "Open to hearing more?", "Want me to show you what that looks like?" Naming the actual time is fine; advertising the smallness of the ask is not.
+- **Greeting shape should tighten across the steps.** Step 1 takes a block greeting on its own line. Step 2 opens `Hi again {{first_name}},` and continues on the same line. Step 3 is tighter still and can drop the greeting word entirely (`{{first_name}}, are you the right person…`). A sequence where all three steps open identically reads like three separate emails rather than a thread.
+- **Flag throat-clearing lines.** "Following up on this.", "Quick follow-up.", "Last one from me." Standalone transition lines occupy the most valuable line in the email and carry nothing. `Hi again` already signals a follow-up.
+- **Flag labelling phrases.** "How it works:", "The part that matters is". Say the thing instead of announcing you are about to say it.
+- **Flag setup-and-contrast.** "Most vendors do X. We do Y." is the writer showing their reasoning; the reader only needs Y. Cutting the setup usually removes 20 to 30 words from a follow-up with no loss.
+- **Flag the summarising payoff.** A sentence that explains a benefit already stated ("That is why month six beats month one") is the writer admiring the point. Cut it.
 - **Angle rotates across steps.** No repeated value prop.
 - **Subject: lowercase, 1 to 3 words, reused across the thread** (steps 2 and 3 reply in-thread, no new subject).
 - **Voice:** no em dashes, no buzzwords (leverage, synergy, revolutionary, best-in-class, game-changing), Oxford comma, sentence case, short paragraphs.

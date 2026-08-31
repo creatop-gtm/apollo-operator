@@ -14,9 +14,22 @@ Take the validated ICP from `profile.yaml` and turn it into a clean, enriched, g
 
 If `profile.yaml` has no validated ICP yet, stop and run **Targeting (`apollo-icp-builder`)** first. Building a full list on an unvalidated ICP is the most expensive mistake in outbound.
 
-## The order matters: filter and dedupe before you enrich
+## The order matters: cheap filters first, expensive steps last
 
-Enrichment costs credits (1 per person *requested*, matched or not). People search costs nothing, and company search costs 1 credit per call. So the pipeline spends as little as possible: narrow hard in search, filter to verified, dedupe, suppress, then enrich only the people you actually want. Never enrich first and filter later.
+Every step costs more than the one before it, so the pipeline is ordered to throw records away while they are still free.
+
+**Search → filter → dedupe → suppress → enrich → verify → write copy.**
+
+People search costs nothing. Company search costs 1 credit per call. Enrichment costs **1 credit per person requested, matched or not**, so you pay for misses as well as hits. Independent verification costs a fraction of a cent per address. Copy and personalization are the most expensive step of all, in money and in tokens, because they are per-contact generative work.
+
+Two rules fall out of that, and both are absolute:
+
+- **Never enrich first and filter later.** Narrow hard in search, apply the free filters, dedupe, and suppress before a single credit is spent.
+- **Never write copy before verification.** Personalizing an address that will never receive anything is pure waste, and an invalid contact is a list problem rather than a copy problem. Verify the enriched list, then write against only what survives. Apollo's own `email_status: verified` does not substitute for this, see step 5.
+
+**The free filter most people miss:** people search returns a **`has_email` boolean** on every row, before you spend anything. Records with `has_email: false` are not worth enriching. Tested 2026-08-31 on a five-record sample from that bucket: three returned `unavailable`, meaning nothing at all, and two returned `extrapolated`, which is Apollo guessing `firstname@domain` rather than verifying it. All five still cost a credit. Filtering on the flag first took a 2,259-person list to 2,019 and the enrichment yield to **99.7% verified**, against a library assumption of roughly 85% attrition.
+
+**Enrichment does not remember what you already paid for.** Re-running three already-revealed people on 2026-08-31 cost three more credits. There is no discount for a record you have enriched before, which is exactly why the suppression step earns its place: skipping it means paying twice for the same person.
 
 ## Where the list lives (files on your drive)
 
@@ -55,7 +68,7 @@ Paginate 100 per page, up to Apollo's 50,000-record ceiling (500 pages). Collect
 **Pick your lane first** (see `apollo-operator`):
 
 - **CLI**, when the filters are expressible as CLI flags and the list runs to hundreds or thousands. Results redirect to disk and never enter the model's context. A real run pulled 3,238 people into 4 MB on disk with nothing in the window, which simply does not fit over MCP.
-- **MCP** (`apollo_mixed_people_api_search`), when the ICP needs a filter the CLI does not have: NAICS, SIC, founded year, headcount growth, tenure, years of experience, market segments, or department headcounts. The CLI is not a superset.
+- **MCP** (`apollo_mixed_people_api_search`), when the ICP needs a filter the CLI does not have: NAICS, SIC, founded year, headcount growth, tenure, years of experience, market segments, LinkedIn URL lookup, or person-level website visitors. Department headcount was on this list until CLI v2.1.0, so check `--help` before assuming a filter is still MCP-only. The CLI is not a superset.
 
 The CLI loop, with the exact `people_search_filters` from `profile.yaml`:
 
@@ -104,7 +117,7 @@ This is the cheap version of the Targeting sample-validation gate, run over the 
 
 Three separate jobs, all of which must happen before you pay for enrichment.
 
-**Dedupe by person id, first, before anything else.** This is not optional and it is not obvious: **Apollo's pagination returns overlapping records across pages.** A real 33-page pull returned 3,238 rows containing only 2,933 unique people, a 9% duplicate rate. If you dedupe by company or apply a per-company cap before deduping by id, the duplicates survive into the final list and you pay a credit for each one.
+**Dedupe by person id, first, before anything else.** Cheap insurance, because **Apollo's pagination has been observed returning overlapping records across pages.** A 33-page pull in July 2026 returned 3,238 rows containing only 2,933 unique people, a 9% duplicate rate. A 43-page pull on 2026-08-27 returned 4,202 rows and 4,202 unique ids, exactly zero duplicates, so the behaviour is either fixed or query-dependent. Keep deduping: it costs nothing, and the failure mode when it does happen is paying a credit per duplicate. If you dedupe by company or apply a per-company cap before deduping by id, the duplicates survive into the final list and you pay a credit for each one.
 
 ```bash
 jq 'unique_by(.id)' people_all.json > deduped_ids.json
@@ -176,6 +189,10 @@ This is not the same as asking permission to spend credits, which you already do
 
 Do not compute this against the plan limit. 2,712 of a 4,000 limit sounds fine; 2,712 of 3,055 remaining does not, and the second number is the real one.
 
+**Hard cap: 10 records per enrichment call, and the CLI does not batch for you.** `apollo people bulk-enrich --file <path>` accepts a file of any length and passes it straight through, so a 1,000-record file returns `400 RECORD_LIMIT_EXCEEDED: cannot enrich more than 10 in a single request`. The cap is not in `--help`. Write the loop yourself, 10 per call, and checkpoint to disk after every batch so an interruption costs nothing: a 1,000-record run took about 100 seconds with zero failures. No credits are consumed by the rejected oversized call, which is correct.
+
+**Enrichment recharges for records you already paid for.** Re-running three already-enriched people cost three more credits. There is no "already revealed" discount, which is the concrete reason the suppression step in section 3 earns its place rather than being hygiene: skipping it means paying twice for the same person.
+
 **Enrich as late as you can.** Enriched data has a shelf life: people change jobs, and a verified address goes stale. If sending is weeks away (a warmup clock still running, for instance), build and grade the list now and enrich when you are close to actually sending. The list costs nothing to hold; the enrichment does.
 
 **Pick the method by size.**
@@ -214,9 +231,36 @@ From `profile.yaml`:
 - **Filter signals** were already applied in search (step 1), so they are done.
 - **Research signals** get applied now, per company. Claude reads the company site and decides (e.g. "has a public pricing page"), or you pull a firmographic signal with `apollo_organizations_enrich`, or a hiring signal with `apollo_organizations_job_postings` (1 credit per org, so use it only when the signal is worth it). Tag each lead by priority: **High** (hits the signal), **Medium** (fits the ICP but not the signal), **Low** (edge of the ICP). Write the tier to `scored.csv`. Work the High-priority leads first.
 
+### 6b. Getting the list into Apollo as an actual list
+
+A list that only exists as a CSV on your drive is not a list your client can see, and it is not something a sequence can be pointed at. Finish the job in Apollo. **It takes two calls, not one, and the obvious path is closed.**
+
+**`mixed_people/add_to_my_prospects` is not available to a script.** This is the endpoint the UI uses for "save these search results", and it returns `403 API_INACCESSIBLE` on the CLI's OAuth token. Verified 2026-08-31, and it is the only endpoint found so far that this token cannot reach, so lane 3 is *not* a complete superset of the UI.
+
+That leaves `contacts/bulk_create` as the only programmatic way in, and it carries the no-dedupe defect from the gotchas below. So:
+
+1. **Create the contacts in checkpointed batches of 100**, recording each batch as complete *before* issuing the next call. Because bulk create does not dedupe, a naive re-run after a mid-way failure duplicates everything it already created. The checkpoint is what makes a re-run safe.
+2. **Attach the list afterwards** with `labels/add_entity_ids_to_label_names`, passing `entity_ids`, `label_names`, and `modality: "contacts"`. `label_names` on bulk create is silently ignored, so this second call is mandatory, not optional.
+3. **Confirm by count.** `apollo labels list` returns `cached_count` per list. It should equal the number you uploaded.
+
+A real run: 564 contacts in 6 batches, then 6 label calls, verified at `cached_count: 564`.
+
 ### 7. Verify emails independently, before anything sends
 
 Every email gets verified before it can be sent to. Unverified means bounce risk, and bounces kill domains.
+
+**The measured version of why this step exists, 2026-08-31.** A list of **997 addresses that Apollo returned as `email_status: verified`** was run through an independent verifier. The result:
+
+| Verdict | Count | Share |
+|---|---|---|
+| Safe to send | 564 | 56.6% |
+| Risky (catch-all) | 413 | 41.4% |
+| Unknown / unreachable | 16 | 1.6% |
+| **Invalid, would bounce** | **3** | 0.3% |
+
+**Apollo called every one of those 997 verified, and only 57% were actually safe to send.** The 41% catch-all share is normal and expected. The three **Invalid** are the point: they were graded `verified` by the provider and would have bounced. Three bounces inside a small first batch is a live deliverability incident on a young domain, and no amount of good copy prevents it.
+
+So "narrow to verified at search time" (step 1) and "verify independently" (this step) are **not** the same control and neither replaces the other. The first stops you paying to enrich rubbish. The second stops you sending to it.
 
 **Use a dedicated email-verification service, and treat it as the deciding vote.** Any data provider's own email status, Apollo's included, is a useful first filter: narrowing to verified at search time (step 1) is what stops you paying to enrich addresses you would throw away. But a provider grading its own data is not an independent check, and the two layers answer different questions. The provider tells you the address exists in its database. A verifier tells you what the receiving mail server will actually do today.
 
@@ -258,7 +302,7 @@ A clean, enriched, verified, graded list, with scoring tags, ready for **Message
 The CSV lives on the drive; it does not touch the Apollo account. To also have the list *in Apollo* (under Lists), create each enriched person as a contact with `apollo_contacts_create`, passing `label_names: ["<list name>"]`. The label is the Apollo List, and it appears in the UI.
 
 Two hard-won rules here:
-- **Bulk create: re-verify before trusting it.** In mid-2026 `apollo_contacts_bulk_create` silently produced *ghost* contacts (`existence_level: "none"`): invisible in the UI, unsearchable, no label attached, behind a confident success payload. Apollo has since reworked this surface, and the tool now documents deduplication (matching by email updates the existing contact) and accepts up to 100 per call. **We have not re-tested it.** Until someone does, either use single `apollo_contacts_create` looped, which is known-good, or run bulk create on a batch of 2 or 3 first and confirm with `apollo_contacts_search` that the records really landed.
+- **Bulk create does NOT deduplicate, whatever the tool description says. Verified 2026-08-31.** `apollo_contacts_bulk_create` and `POST /contacts/bulk_create` state plainly that "Apollo automatically prevents duplicates: any object that matches an existing contact by email or other details updates that existing contact instead of creating a new record." **That is not what happens.** Submitting the same five contacts twice produced two records per email; submitting two of them a third time produced three. Every call creates new records, and identical emails do not collide. The count of records per email exactly equals the number of times it was submitted. Two consequences: **never retry a bulk create on timeout or uncertainty**, because a retry duplicates rather than reconciles, and **dedupe your payload before sending**, since the API will not do it for you. If you need certainty that a record is updated rather than added, search for it first and use `apollo_contacts_update` on the id you find. The historical ghost-contact failure (`existence_level: "none"`, invisible in the UI) does appear to be fixed: records now land properly with `person_id` and `organization_id` populated and are findable by `contacts/search`. The duplication is a separate and current defect. Also verified in the same run: **`label_names` on bulk create silently does nothing.** No label was created and none was attached. Add contacts to a list afterwards with `apollo_labels_add_entity_ids_to_label_names` instead.
 - **Bulk create is destructive on a match.** Where it matches an existing contact, the values you send **overwrite** that contact's current fields, and that cannot be undone. Do not push a thin record over a rich one.
 - **Verify, do not trust the response.** After creating, confirm with `apollo_contacts_search` (by name or keyword) that the contact actually landed. A success payload is not proof.
 

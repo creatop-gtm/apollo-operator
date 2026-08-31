@@ -73,6 +73,35 @@ Derive or update the `business:` and `voice:` blocks of `profile.yaml` from the 
 
 One `brief.md` at the project root, next to `profile.yaml`, following the template. Updated `business:` and `voice:` blocks in `profile.yaml`. A dated line in the brief's changelog saying what changed.
 
+## Mine the team's own recorded calls first
+
+**Added v1.3, after testing the surface live.** If the team records calls or meetings in Apollo, the highest-quality source for this brief is already sitting in their account, and reading it is **free**. Four commands, no credits consumed on any of them, verified across a 79-conversation account on 2026-08-31.
+
+```bash
+apollo conversations search --limit 25 -f json          # find them
+apollo conversations show --id <conversation_id>        # the whole thing
+apollo conversations export --start <iso> --end <iso> --email <teammate>
+apollo conversations export-status --id <export_id>     # returns a signed download URL
+```
+
+**`show` is the one that matters**, because it returns a `call_summary` object Apollo has already structured for you:
+
+| Field | Feeds |
+|---|---|
+| `objections` | The brief's objections section, in the buyer's own words |
+| `pain_points` | Pains, with the ones that actually came up ranked over the ones marketing lists |
+| `outcome` | What closes and what stalls |
+| `next_steps` | The real call to action, as opposed to the one on the website |
+| `pricing_discussion` | How price actually lands, which almost never matches the pricing page |
+
+It also returns the full `transcript` as a list of segments (`participant_name`, `spoken_sentence`, `start_time`, `end_time`), `key_topics` with question and tracker insights, `participants` split into `internal` and `external`, and signed URLs for the audio and video.
+
+**Why this outranks the website.** The website is how a business describes itself. A recorded call is how its buyers actually describe their problem, and which objections come up often enough to need an answer. When the two disagree, the call wins. Marketing copy is aspirational; a prospect saying "we tried this before and it didn't stick" is evidence.
+
+Two cautions. Conversations are **real customer conversations**, so treat them as confidential source material: mine them for patterns and never paste names, quotes, or company details into anything that ships or goes to a third party. And `search` returns `state`, which is worth checking, since a conversation only carries a summary once it reaches `insights_generated`.
+
+**Search field names are not the obvious ones**: it is `topic` rather than title, `start_time` rather than started_at, and `conversation_type` (`video_conference` or `phone_call`) rather than type. Filters cover account, contact, organization, tag, tracker, and date range. `export` fails with `404 Unable to find conversations with the given time range` when the window is empty, which is a real answer rather than an error.
+
 ## Push it into Apollo's Context Center
 
 Apollo has a native, team-wide home for exactly this information: the **Context Center**, an ICP profile plus a set of product profiles that Apollo's own AI features read when generating outreach. Its fields line up almost one to one with `brief.md`:
@@ -92,12 +121,18 @@ Tools: `apollo_context_center_show` to read (**always read before writing**), `a
 
 **Worth doing**, because it means the brief stops being a file only this library reads and starts powering Apollo's own AI too, for everyone on the team.
 
-**Four cautions:**
+**Seven cautions.** The first four were known; the last three came out of running this against a real, badly stale Context Center on 2026-08-31.
 
 - **It is shared and destructive.** One ICP per team, and every field you send **replaces** the previous value. An edit changes it for everyone, and it is not reversible. Read first, send only what changes, and confirm before writing.
 - **`approved` decides whether it is live.** `false` keeps it a draft; `true` publishes it to Apollo's AI features. Ask which the operator wants rather than defaulting.
 - **Each `create_product` call makes a new product.** Calling twice makes two. To change one, read it and update it.
 - **Never invent positioning to fill a field.** Same rule as the brief itself: a `[TBD]` is honest, and a fabricated value proposition will show up in generated copy sent to real people.
+
+- **There is no way to delete a product.** `create_product`, `show_product`, and `update_product` exist. There is no delete, on MCP or REST. A stale product set is therefore **permanent**, and the only move is to repurpose each one in place. Count the existing products before you plan: if a business has four services and the Context Center holds five stale products, something has to absorb the fifth. Map deliberately rather than leaving an old service sitting there contradicting the new ones.
+
+- **Back up before writing, because there is no read-back path outside MCP.** `GET /context_center` returns 404, so `apollo_context_center_show` is the only way to read the object. Combined with edits being irreversible, that means: read the whole thing, save it to disk, and only then write. Without that, a bad overwrite has nothing to restore from.
+
+- **`additional_context` is the highest-leverage field in the whole object, and the mapping table above assigns it nothing.** It is free text that Apollo's AI reads when generating copy, which makes it the right home for everything a field-shaped schema cannot hold: banned self-descriptions, the exact register to use, prices that must never be invented, tone and mechanics rules, and the words that are forbidden. If a business has copy guardrails anywhere in its brief, they belong here. A correct `value_proposition` with no guardrails still produces copy that breaks the rules.
 
 `brief.md` stays the source of truth, because it holds nuance and open questions that a structured profile cannot. The Context Center is a **projection** of it into Apollo. When they disagree, the brief wins and the Context Center gets updated.
 

@@ -49,7 +49,7 @@ The rule it collapses to: **search wide off-context, act narrow on MCP.**
 
 ## Built by operators, tested live
 
-We build this on our own Apollo account, and running it is what finds the problems. Some of what testing caught, now encoded:
+We build this on our own Apollo account, and running it is what finds the problems. Nothing here comes from reading the docs: every item below cost us something to learn. Some of what testing caught, now encoded:
 
 - A title filter for `founder` also returns **Founding Engineer, Founding Designer, and Founding GTM** — 9 to 14% of a raw list, and none of them buyers.
 - Apollo's pagination **overlaps**, so 3,238 rows contained 2,933 unique people. Per-company capping does not remove them, and you pay per duplicate at enrichment.
@@ -57,6 +57,12 @@ We build this on our own Apollo account, and running it is what finds the proble
 - **MCP cannot stop a live sequence.** Every other lane can. Set that up before you launch, not during an incident.
 - Running several angles against one ICP **overlaps silently**: 85 people in a second list had already been enriched for the first.
 - A title filter quietly inflated a search from 679 real matches to over 91,000.
+- **A provider's own `verified` status is not deliverability.** 997 addresses graded `verified` came back from an independent verifier as 564 safe to send, 413 catch-all, and 3 that would have bounced. Verification is a separate control, and it belongs before you write copy, not after.
+- **Bulk contact creation does not deduplicate**, despite documenting that it does. The same five contacts submitted twice produced two records each. Never retry on a timeout.
+- **Enrollment can fail silently.** Passing several contact ids to the CLI joins them into one string, so Apollo finds nothing and returns exit 0 with an empty campaign. Assert on the response body, never the exit code.
+- **You cannot read a sequence back.** Four separate read paths return empty bodies, so the last check before activation is a human opening the Apollo UI. Every skill that creates one hands you the link.
+- **You pay per record attempted at enrichment, not per email found**, and re-enriching a record you already paid for charges again.
+- **Credits are eleven separate pools**, not one balance, and the AI pool is 200 times the size of the contact-data pool. Data is the scarce resource, not generation.
 
 ## It explains itself
 

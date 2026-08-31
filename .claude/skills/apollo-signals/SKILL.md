@@ -51,6 +51,25 @@ Some of these are labeled advanced filters and can return an upgrade-required er
 
 `apollo_organizations_enrich` also returns `website_intent`, `website_last_visit`, `website_unique_visitors`, and `website_total_visits` for teams with access.
 
+**Person-level visitor filtering is newer still, and it is MCP-only.** The company-level filters above tell you *which company* came to your site. A parallel set on `apollo_mixed_people_api_search` and `apollo_contacts_search` tells you *which person*, which is the difference between an account signal and a name to write to:
+
+- `website_visitors_people_from_domains` / `..._from_past` — same shape as the company filters, but the window starts at 7 days, not 1.
+- `website_visitors_people_pages` / `..._exact_pages` — path fragments, or exact stored `domain/path` values.
+- `website_visitors_people_intent` — low / medium / high.
+- `website_visitors_people_confidence_tier` — how confident Apollo is that it identified *this person*, not just the company. Filter to `high` before you write anything personal about the visit.
+- `website_visitors_people_page_view_counts` — defaults to a 90-day window if you omit the time filter, rather than being ignored. This differs from the company-level `web_page_view_counts`, which is silently dropped without a window.
+- `sort_by_field: last_visited_at` — most recent visitors first, which is the ordering you actually want for a timing signal.
+
+Three limits to state plainly before building an angle on this, because two of them are gates rather than caveats.
+
+**Person-level tracking is a paid add-on.** In the domain settings, tracking is a choice between "Company: identify companies only" and "Company & person", and the second is labelled **Inbound add-on**. Company-level filtering comes with the plan; every person-level filter in the list above needs that add-on bought first. Verified in the UI 2026-08-31. Check this before designing an angle on it, because the API will simply return nothing rather than telling you the feature is not on the plan.
+
+**Person-level identification is United States only**, so a non-US list comes back thin or empty no matter how much traffic the site has. The same is not true of company-level, which is global.
+
+**The script has to be live and verified.** One pixel covers both tracking modes, so there is nothing to change later when person-level is enabled. But the domain sits `Inactive` with "Failed to connect: check your script" until Apollo can actually see it, and an inactive domain yields no data while still counting against the domain limit (three on a standard plan). Read tracked domains and intent paths from `apollo_website_visitor_domain_tracker_index` rather than typing them from memory, and confirm status is active before trusting an empty result. There is a four-tool tracker group for this (`index`, `install_script`, `send_install_email`, `update`) plus `apollo_website_visitors_domain_aggregates` for the rollup.
+
+None of it has a CLI flag, so a large visitor-based pull belongs on lane 3 with the full payload.
+
 This is the strongest offer-fit signal in the menu, because someone reading your pricing page has already told you what they want. It also needs no guessing: it is your own data. Gated on having the tracking script installed, so ask before promising it.
 
 ## What still lives in Apollo's UI only

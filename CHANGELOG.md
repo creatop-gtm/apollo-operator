@@ -3,6 +3,71 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## v1.3.0 — 2026-08-31
+
+The surface re-check. Everything in v1.2 was true when we shipped it; five weeks later some
+of it was not. This release re-ran the audit against a newer CLI and a wider MCP surface, then
+took the whole motion live on our own account: an angle built on filters the CLI still cannot
+express, a thousand records enriched, independently verified, uploaded as a real Apollo list,
+and a sequence written, built, and activated. Nine shipped claims were wrong. They are corrected
+here, with dates, so you can tell what moved and when. Still 17 skills.
+
+### Corrected
+
+- **The flagship MCP-only filter example moved to NAICS.** `--department-headcount` landed in
+  Apollo CLI v2.1.0. Eight of the nine filters we listed remain CLI-less, and a new MCP-only
+  family appeared in person-level website visitors, so the four-lane model got stronger, not
+  weaker. Check `--help` against the list rather than trusting it.
+- **Per-contact personalization no longer needs REST.** `apollo fields create` exists as of CLI
+  v2.1.0, so the whole flow runs on the CLI's own token with no API key.
+- **`conversations` is a full CLI command group**, not REST-only.
+- **"Step 3 is the shortest email" was backwards.** Measured across a real sequence, step 2 is
+  the lightest touch; step 3 runs longer because it carries the routing question and the fallback.
+- **Pagination overlap is no longer guaranteed.** A 43-page pull returned zero duplicates against
+  a 9% rate in July. Keep deduping, it is free, but the warning is now dated on both sides.
+
+### Added
+
+- **Credits are eleven separate pools**, documented in full, with the ratio that matters: the AI
+  pool is 200 times the size of the contact-data pool. Data is scarce, generation is not. Never
+  say "credits" without naming the pool.
+- **The pipeline is reordered**: search, filter, dedupe, suppress, enrich, **verify**, then write
+  copy. Verification moved ahead of copy because personalizing an address that will never receive
+  anything is pure waste. The evidence: 997 addresses a provider graded `verified` were 564 safe
+  to send, 413 catch-all, and 3 that would have bounced.
+- **The free `has_email` filter.** Search returns it on every row, before you spend anything.
+  Records without it return nothing or a guessed address, and both still cost a credit. Filtering
+  first took an enrichment yield to 99.7% verified.
+- **Enrichment economics, measured.** You pay per record *attempted*, not per email found.
+  Re-enriching a record you already paid for charges again. There is a hard cap of **10 records
+  per call** and the CLI does not batch for you.
+- **Getting a list into Apollo as an actual list.** `add_to_my_prospects` returns 403 to a script,
+  so it is bulk create in checkpointed batches, then a second call to attach the list.
+- **Bounce Guard**, Apollo's new account-wide auto-pause, including the trap: it does not evaluate
+  below 200 emails in the window, so small sends and the first days of a ramp are unprotected.
+- **Sequence build mechanics**: the exact `emailer_touches` payload shape, step ids being required
+  on update, and the schedule fields that decide when anything actually sends.
+- **Conversations as the best research source you already own.** `call_summary` returns structured
+  objections, pain points, outcome, next steps, and pricing discussion, for zero credits. A website
+  is how a business describes itself; a recorded call is how its buyers describe their problem.
+- **First-party intent as a fourth kind of angle**, plus a table mapping every advanced filter to
+  the kind of angle it builds.
+- **Follow-up craft**: how the greeting tightens across a thread, and the four things to cut from
+  every follow-up.
+
+### Warnings you should read before your next launch
+
+- **Bulk contact creation does not deduplicate**, despite documenting that it does. Records per
+  email equal submissions per email. Never retry on a timeout, and dedupe your own payload.
+- **Enrollment fails silently.** Passing several ids to `--contact-id` joins them into one string;
+  Apollo finds nothing and returns exit 0 with an empty campaign. Assert on `contacts` and
+  `skipped_contact_ids` in the response body, never on the exit code.
+- **Sequences are effectively write-only.** Four read paths, all returning empty bodies. The last
+  check before activation is a human opening the UI, so every skill that creates or updates one
+  now hands you the link.
+- **The MCP session can expire mid-task** while the CLI token keeps working. For anything long
+  running, prefer the other lanes.
+
 ## v1.2.0 — 2026-07-29
 
 The release that came from actually running the library end to end on a live account

@@ -8,8 +8,8 @@ result described. Where the CLI misbehaves, the workaround is given rather than 
 ## Lane 3: REST with the CLI's own token
 
 The `apollo` binary has no flag for NAICS, SIC, founded year, headcount growth, tenure, years of
-experience, market segments, or department headcounts. You do not have to fall back to MCP for
-those. The token `apollo auth login` already stored authenticates against the same endpoint the MCP
+experience, market segments, LinkedIn URL lookup, or person-level website visitors. (Department
+headcount was on this list until CLI v2.1.0.) You do not have to fall back to MCP for those. The token `apollo auth login` already stored authenticates against the same endpoint the MCP
 uses, so you get the **full filter surface with disk output and no API key**.
 
 ```bash

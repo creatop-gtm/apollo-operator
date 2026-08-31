@@ -100,3 +100,42 @@ Do not launch four campaigns in one week. With one live campaign a result is att
 3. **Keep the rest staged.** A free-stage list costs nothing to hold and everything to enrich early.
 
 If the sharpest angle fails, that is information about the **offer**, not the angle. Widening the list will not fix it, and a bigger list of the wrong people is just a more expensive version of the same result.
+
+---
+
+## A fourth kind: first-party intent
+
+Added v1.3. The three kinds above are all inferred from Apollo's data about the company. **First-party intent is different in kind: it is behaviour on your own property**, and person-level visitor filtering made it reachable headlessly (see `apollo-signals`).
+
+Someone from the account read your pricing page four times last week. That is not a firmographic fact or a public event, it is an action aimed at you.
+
+- **Highest relevance of any angle**, because the prospect started it.
+- **Decays fastest.** Faster than a hiring signal. A pricing-page visit is worth writing about within days, not weeks. Sort by `last_visited_at` and work the top.
+- **Smallest universe by a wide margin**, and hard-capped by your own traffic. Treat it as a queue to work continuously, not a list to build once.
+- **Two hard gates**: the tracking script must be installed, and person-level identification is **United States only**. A non-US ICP gets company-level signal at best.
+- **Filter `website_visitors_people_confidence_tier` to `high`** before you reference the visit in copy. Referencing a visit that Apollo guessed wrong is worse than not referencing it.
+
+| | Relevance | Decay | Typical size | Use as |
+|---|---|---|---|---|
+| First-party intent | Highest | Fastest | Smallest | A queue, worked continuously |
+
+It does not replace the volume angle, and it cannot be scaled by trying harder. It is capped by traffic, so it is the one angle where the growth lever sits outside outbound entirely.
+
+---
+
+## Mapping the advanced filters onto the taxonomy
+
+Most of the filters that have no CLI flag are exactly the ones that build a sharp angle, which is why lane 3 matters here (see `apollo-operator`). What each is actually good for:
+
+| Filter | Kind of angle it builds | Note |
+|---|---|---|
+| `organization_naics_codes` / `organization_sic_codes` | **Structural**, vertical slice | The precise way to cut a vertical. Far tighter than keyword tags, which match prose. NAICS is prefix-matched, so a shorter code is deliberately broader. |
+| `organization_headcount_growth_range` + `..._past_n_months` | **Timing** | Growth is a decaying signal even though headcount is structural. Rebuild it, do not stockpile it. |
+| `person_days_in_current_title_range` | **Timing** | New person in seat. A `max` of 180 finds someone still forming their plan; a `min` of 730 finds someone who owns the current mess. Opposite angles from one filter. |
+| `person_total_yoe_range` | **Structural**, about the person | Separates a first-time head of sales from a fourth-time one. Changes the register of the copy more than the offer. |
+| `organization_founded_year_range` | **Structural** | Company age as a proxy for how set the processes are. |
+| `market_segments` | **Structural** | Matched against tags and name, so it is fuzzy. Size it before trusting it. |
+| `person_linkedin_urls` | Not an angle | A lookup path for a list you already have, not a way to discover one. |
+| `website_visitors_people_*` | **First-party intent** | See above. |
+
+Two of these deserve the warning attached to `organization_department_or_subdepartment_counts`: an unrecognised department key, and a market segment that matches nothing, are both **accepted by the schema and silently return no matches** rather than erroring. A zero-result angle is usually a typo, not an empty market. Size it against the unfiltered baseline before concluding anything.

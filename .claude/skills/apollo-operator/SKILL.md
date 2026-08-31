@@ -64,7 +64,10 @@ The `apollo` binary covers the common filters. Several **advanced filters have n
 
 NAICS codes and their exclusions · SIC codes and their exclusions · founded-year range ·
 headcount-growth window and range · days in current title (tenure) · total years of experience ·
-market segments · department headcount ranges · LinkedIn URL lookup.
+market segments · LinkedIn URL lookup · and the seven person-level website-visitor filters.
+
+**Department headcount used to be on this list and landed in CLI v2.1.0** (2026-08-07). Expect more
+to follow: check `--help` against this list rather than trusting it.
 
 **But you are not stuck choosing between them.** `apollo auth login` stores an OAuth access token
 at `~/.config/apollo/credentials`, and that token authenticates directly against the REST endpoint
@@ -78,13 +81,14 @@ curl -s -X POST "https://api.apollo.io/api/v1/mixed_people/api_search" \
   -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
   -d '{"person_titles":["founder","ceo"],
        "organization_num_employees_ranges":["11,50","51,200"],
-       "organization_department_or_subdepartment_counts":{"master_sales":{"min":0,"max":2}},
+       "organization_naics_codes":["5415"],
        "per_page":100,"page":1}' > page1.json
 ```
 
-Verified live: a department-headcount search returned an identical total to the same query over
-MCP (2,837), while writing to disk and costing nothing in context. **No API key needed**, the CLI's
-OAuth token is enough.
+Verified live 2026-08-27: the NAICS filter bites on this lane, narrowing the same founder/CEO query
+from 914,768 to 144,734, while writing to disk and costing nothing in context. **No API key needed**,
+the CLI's OAuth token is enough. (The original v1.2 verification used department headcount and
+matched MCP's total exactly at 2,837; that filter has since landed in the CLI.)
 
 Two gotchas worth knowing:
 
@@ -99,8 +103,8 @@ Two gotchas worth knowing:
 Decide in this order. The first question is capability, not volume.
 
 **1. Does the search need an advanced filter?** NAICS, SIC, founded year, headcount growth, tenure,
-years of experience, market segments, or department headcounts. The `apollo` binary has no flag for
-any of them. Under ~100 records use **lane 1 (MCP)**; above that use **lane 3 (REST with the CLI's
+years of experience, market segments, LinkedIn URL lookup, or person-level website visitors. The
+`apollo` binary has no flag for any of them. Under ~100 records use **lane 1 (MCP)**; above that use **lane 3 (REST with the CLI's
 token)**, which gets the full filter surface *and* disk output.
 
 **2. Is the step human-gated or reputation-sensitive?** Enrollment and activation
@@ -186,9 +190,57 @@ Check it before scripting a long run, because the failure mode is silent: a burs
 
 Practical defaults that have held up in real runs: a **0.2 to 0.4 second sleep between paginated calls**, a small worker pool rather than a burst for anything parallel, retry on anything that is not an explicit success, and never treat a `200` as proof (several APIs, Apollo included, return `200` with a failure flag in the body).
 
+## Credits are eleven separate pools, not one balance
+
+**The single most useful thing to know before budgeting anything.** `apollo usage credits` returns eleven independent pools, and spending one does not touch the others. A real paid account on 2026-08-31:
+
+| Pool | Limit | What draws on it |
+|---|---|---|
+| `lead_credit` | 4,000 | Contact data: enrichment, email reveal, company search. **The scarce one.** |
+| `ai_credit` | **800,000** | Apollo's own AI generation, including dynamic prompt-execution fields |
+| `broadcast_credit` | 50,000 | Sending volume |
+| `conversation_credit` | 4,000 | Call and meeting transcripts |
+| `direct_dial_credit` | 4,000 | Phone number reveal |
+| `dialer` | 390 | Dialer minutes |
+| `web_search_record_credit` | 200 | Agentic web-search lookups |
+| `inbound_website_visitor_credit` | 100 | Website visitor identification |
+| `export_credit`, `power_up_credit`, `contact_website_visitor_credit` | 0 here | Plan-gated, zero on this account |
+
+**Read the ratio, because it drives real decisions.** `ai_credit` is 200 times larger than `lead_credit` on the same plan. Apollo prices its own AI generation as near-free and prices **data** as the scarce resource. So the expensive thing about a list is finding and verifying the people, not writing to them.
+
+Two consequences worth acting on:
+
+- **Never say "credits" without saying which pool.** "We have 3,000 credits left" is meaningless on its own, and a skill that warns about credit cost without naming the pool sends operators to conserve the wrong thing.
+- **Generation inside Apollo is cheap; generation outside it is not.** This is the whole basis of the two-path personalization choice in `apollo-sequence-builder`.
+
+**Not yet verified:** that running a dynamic prompt-execution field decrements `ai_credit` specifically. The pool structure and the 800,000 limit make it the obvious candidate, but the enrichment tool that runs those fields is not exposed on any headless lane, so it could not be tested from a script. Treat as strongly indicated, not measured.
+
 ## Preflight (zero credit)
 
 Before real work on any lane, confirm access. The CLI and API expose `GET /v1/auth/health`, which returns `{ "healthy": true, "is_logged_in": true }` and spends **no credits**. It is the cleanest way to verify a session or key works before doing anything that costs money, the same role `apollo_users_api_profile` plays on the MCP preflight in `operator-context`.
+
+## Lane 1 can disappear mid-task. The others do not.
+
+**Observed 2026-08-31.** MCP writes succeeded at 10:38. Minutes later the same connection returned `This connector requires authentication.` In the same minute, `apollo auth whoami` was fine and a lane 3 REST call returned 200. The MCP session had expired; the CLI's stored OAuth token had not.
+
+This is an **availability** difference, not a capability one, and it is the part of the four-lane model that is easiest to miss. Lane 1 is a connector session that can lapse without warning in the middle of a job. Lanes 2, 3, and 4 share a credential on disk with a much longer life.
+
+Two practical consequences:
+
+- **For anything long-running or unattended, prefer lanes 2 to 4.** A batch that takes 20 minutes should not depend on a session that can expire at minute 12.
+- **A sudden authentication error on MCP does not mean the account is broken.** Check `apollo auth whoami` before you start debugging credentials. If the CLI is fine, it is the connector that needs reconnecting, and only the user can do that.
+
+## Hand back a URL whenever a human has to look at something
+
+Headless work still ends in a person's browser more often than the lanes suggest, and some things **can only** be checked there: sequence bodies come back empty from every read path, and dynamic AI field prompts are not readable at all. Whenever you create or change something in one of those, print the link rather than the id.
+
+| Object | URL |
+|---|---|
+| Sequence | `https://app.apollo.io/#/sequences/<id>` |
+| List (label) | `https://app.apollo.io/#/lists/<id>` |
+| Contact | `https://app.apollo.io/#/contacts/<id>` |
+
+An id makes the operator go hunting; a link makes it one click. A verification step someone has to hunt for is a verification step they skip, and on sequences that means real emails going out unread. Say what the link is *for*, not just that it exists.
 
 ## Common mistakes
 
