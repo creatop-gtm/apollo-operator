@@ -3,7 +3,123 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
-## v1.3.0 — 2026-08-31
+## v1.4.0 (2026-09-21)
+
+**MCP v2, Apollo's own agent, and three new skills.** Apollo shipped a four-tool router in place of
+the 74-tool catalog, opened the MCP to master API keys, and put its own AI agent behind nine MCP
+tools. This release tests all three on a live account and rewrites the lane model around what held.
+It also adds campaign reporting, an account audit anyone can run on their own Apollo, and
+account-based outbound, plus a compliance reference, a plugin install path, and the corrections
+that using v1.3 for real turned up. **20 skills, up from 17.**
+
+### Kept current
+
+Eight shipped claims were wrong by the time we checked, and are corrected with dates.
+
+- **Sequences are readable now.** v1.3 said every read path returned empty bodies.
+  `apollo_emailer_campaigns_show` now returns every step, touch, subject, and body, and
+  `GET /emailer_campaigns/{id}` does the same with a master API key (the CLI's token still gets 403).
+  Human approval before activation stays as policy, not as a workaround for a missing read.
+- **MCP can stop a live sequence.** `apollo_sequences_update` with `active: false` works, with a
+  trap: the update is declarative, so every step, touch, and template id you leave out is deleted.
+  The CLI's `sequences abort` stays the recommended kill switch.
+- **"Step 3 is the shortest email" is right after all.** v1.3 reversed it on one measured sequence.
+  The rule as practised: step 3 is one or two sentences, three at most, and `sequence-reviewer`
+  now checks for it.
+- **Bulk contact creation never updates on a match**, whatever its description says. Single create
+  does match on email, and **overwrites the existing record's fields** when it does. Search by exact
+  email before any create, and never test with a real address.
+- **Enrolling by `label_names` still fails** (`contact_ids` required), re-verified. Section 6b's
+  two-call method is the path.
+- **Opens, clicks, and replies are on the MCP.** `apollo_emailer_messages_search` returns per-sequence
+  counts in `metadata_mode` and per-message events by id; v1.3 said REST only.
+- **Advanced filters are not MCP-only.** NAICS, SIC, tenure, headcount growth, founded year, and
+  market segments have no CLI flag, but lane 3 (REST with the CLI's token) has all of them.
+- **Pagination overlap is query-dependent, not guaranteed.** Two more clean pulls (4,202 rows,
+  4,202 unique). Keep deduping by id anyway; it is free.
+
+### Added
+
+- **MCP v2 is a router, and the library prefers it.** `https://mcp.apollo.io/mcp-v2` exposes
+  `apollo_find_tools`, `apollo_read`, `apollo_write`, and `apollo_write_destructive`: 5.6 KB of
+  schema instead of 344 KB, 1.6% of the preload, every v1 tool dispatchable, identical search
+  totals. The hand-maintained tool map is demoted to a convenience and `find_tools` is the
+  authority. The dispatcher is a free cost signal: anything routed through `apollo_write_destructive`
+  spends credits or changes live state, so it gets a cost quote and the operator first.
+- **Master API keys run the MCP unattended.** `X-Api-Key` on `/mcp` or `/mcp-v2` removes the consent
+  prompt and the session expiry that v1.3 documented. Must be a master key; scoped keys are refused.
+  Treat it like a password. On v1 it also reaches tools the router documents but will not dispatch.
+- **The router is ahead of its dispatcher.** Record collections, CSV exports, dynamic AI enrichment,
+  and domain authentication diagnosis appear in `find_tools`, return `not_implemented` on v2, and run
+  on v1 with a master key. Record collections carry a third lock, an "AI Studio" access flag no plan
+  offers. Reported to Apollo.
+- **Apollo's own AI agent, tested and placed.** Nine `apollo_agent_*` tools are nine doors to one
+  agent: prospecting, campaign planning, sequence copy, lead scoring, workflow automation, mailbox
+  connection, call summaries, product how-to, and billing. Planning is free and it is good: it read
+  the Context Center, planned four concepts, sized four audiences live, and stopped for confirmation.
+  Reachable today only on v1 with a master key. The stance: complement, do not compete. Apollo's
+  agent is strong at the front of the motion and absent from deliverability, verification,
+  composition, suppression, and warmup. `apollo-icp-builder` and `apollo-sequence-builder` now say
+  the option out loud where the overlap happens, and everything the agent returns still goes through
+  List and Infrastructure before it sends. A new routing row sends product how-to questions to
+  Apollo's own knowledge rather than re-explaining its UI.
+- **`campaign-reporting`** (Iterate, new): results per sequence, step, variant, mailbox, seniority,
+  and day of week, plus meetings booked and opportunities, read-only from
+  `apollo_analytics_sync_report`, with `reply_class` as a first-pass intent sort. Verified against
+  the Apollo UI. Traps: archived sequences vanish from search but keep reporting, and
+  `num_emails_bounced` counts undelivered sends as bounces.
+- **`apollo-account-audit`** (Foundations, new): 14 read-only checks on an existing account,
+  mailbox limits, domain authentication, Bounce Guard per sequence, idle and unapproved sequences,
+  lists, credit pools, Context Center, website tracker, duplicates. Graded, stops at findings. Its
+  first run found an active sequence sending nothing because its touches were never approved.
+- **`account-based-outbound`** (Targeting to Launch, new): when to reach several people at one
+  company, how many, how it changes suppression and subject lines, and the account tools that
+  carry it (`apollo_accounts_bulk_create` with `run_dedupe`, account lists, account-level analytics).
+  Tested live.
+- **Compliance reference**: opt-outs, suppression beyond Apollo, the workspace GDPR setting and
+  `disable_eu_prospecting`, do-not-call screening and `dnc_status_cd`, recorded-call consent.
+  Operating rules, not legal advice, wired into five skills and the audit.
+- **Multi-angle strategy with live evidence**: timing signals decay, technographic and structural
+  angles do not; one angle per campaign for clean attribution; the company overlap between angles
+  measured on a real four-angle run.
+- **Company search, measured.** 1 credit per call **including the empty page**, so stop on a short
+  page. A company row carries `founded_year`, revenue, NAICS, SIC, and headcount growth over 6, 12,
+  and 24 months without enrichment, so growth and sector grade off one free join. And a zero-credit
+  preview sample for a prospect or client, from people search alone (`apollo-list-builder` 4b).
+- **Enrich-late, re-verified.** Re-search before enriching a held-back tranche: 8.4% of candidates
+  left a headcount-growth query in 18 days, and the search is free. `has_email` yield held at 99.7%
+  a third time. The CLI batch loop verified again at 95 batches, zero failures.
+- **Two targeting traps with numbers.** A title filter for `founder` also returns Founding
+  Engineer, Designer, and GTM: 9 to 14% of a raw list. "Recently funded" includes acquisitions:
+  34% of one funded universe was Merger / Acquisition. Pair the date filter with the funding type.
+- **`sequence-reviewer` checks for empty merge fields** (no fallback means "Hi ,"), groups repeated
+  findings, and no longer imposes house style. `apollo-sequence-builder` matches.
+- **Install as a plugin.** `/plugin marketplace add creatop-gtm/apollo-operator` then
+  `/plugin install apollo-operator@creatop`, from any directory, updatable. The repo now carries both
+  the plugin layout (`skills/`) and the project layout (`.claude/skills/`), rendered from one
+  source; never hand-edit either. About 1,400 always-on tokens per session.
+- **Setup covers the MCP**, not only the CLI: connecting v1 or v2, Apollo's own plugin and its four
+  slash commands (which sit beside this library), and the master key for unattended runs.
+- **Conversations on the MCP** (`apollo_conversations_search`, `get_insights`, `get_transcript`),
+  domain authentication diagnosis for domains with a mailbox in Apollo, `apollo_organizations_lookup`
+  as the free way to resolve a company id, `apollo_organizations_enrich` at 1 lead credit, the
+  tool map additions (labels, activity feed, feedback log, users), and the CLI routes for labels,
+  emails, and mailboxes.
+
+### Read these before your next launch
+
+- **AI-written touches are silently dropped.** `generation_options: ai_full_email` is accepted on
+  create and comes back as `generation_options: []` on read. No content, no credits, no error.
+  Always read a touch back after setting it.
+- **`apollo_write` is not a safety classification.** All nine agent tools are advertised as
+  `apollo_write`, and one of them builds a list once confirmed. `apollo_write_destructive` reliably
+  means spending. `apollo_write` means read what the tool does.
+- **Domain diagnosis only sees domains with a mailbox connected to Apollo**, returns the last stored
+  check rather than a live one, and is not a general DNS checker.
+- **NAICS codes are 2 to 5 digits.** A 6-digit code fails with a bare `Invalid params`.
+- **Scripts against `mcp.apollo.io` need a curl-style `User-Agent`**, or Python's `urllib` gets 403.
+
+## v1.3.0 (2026-08-31)
 
 **Call intelligence, credit control, and verify-first lists.** Three new capabilities, all of
 which make a campaign cheaper to build and more likely to land: your own recorded calls become
@@ -70,7 +186,7 @@ Five things moved under us since v1.2. Corrected with dates, so you can tell wha
 - **The MCP session can expire mid-task** while the CLI token keeps working. For anything long
   running, prefer the other lanes.
 
-## v1.2.0 — 2026-07-29
+## v1.2.0 (2026-07-29)
 
 The release that came from actually running the library end to end on a live account
 rather than reading it. Most of what follows was found by use, not by review: the
@@ -141,7 +257,7 @@ rather than reading it. Most of what follows was found by use, not by review: th
   a double-touch.
 - **`companies search` splits results across `.accounts` and `.organizations`**, with
   the ratio shifting by page. Reading one array silently loses most of the result set.
-- **`people search -f csv` is broken** — it emits the whole result array in one cell.
+- **`people search -f csv` is broken**: it emits the whole result array in one cell.
   Use `-f json` and shape with `jq`.
 - **`sequences abort` documented as the kill switch.** Available on the CLI and REST;
   **MCP is the only lane that cannot stop a live send.**
@@ -155,7 +271,7 @@ rather than reading it. Most of what follows was found by use, not by review: th
 - **Bulk contact creation softened**: the old ghost-contact failure appears to be fixed,
   but it is flagged for re-verification rather than trusted.
 
-## v1.1.0 — 2026-07-23
+## v1.1.0 (2026-07-23)
 
 Apollo shipped a CLI and formalized three ways to run headless (MCP, CLI, raw
 API). This release makes Apollo Operator aware of all three, and adds the two
@@ -197,7 +313,7 @@ the business before targeting, and building the sending stack before sending.
 - **`apollo-deliverability`** and **`apollo-go-live`**: point back to
   `sending-infrastructure` when no sending stack exists yet.
 
-## v1.0.0 — 2026-07-06
+## v1.0.0 (2026-07-06)
 
 The launch release. 13 skills turning the raw Apollo MCP into a guided
 outbound motion, built and tested live on a real Apollo account.

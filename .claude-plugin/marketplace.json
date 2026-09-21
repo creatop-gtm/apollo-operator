@@ -1,0 +1,16 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "creatop",
+  "owner": {
+    "name": "Creatop",
+    "url": "https://creatop.net"
+  },
+  "plugins": [
+    {
+      "name": "apollo-operator",
+      "source": "./",
+      "description": "An opinionated go-to-market operator for Apollo.io, built as open-source Claude Code skills."
+    }
+  ],
+  "description": "Creatop's open-source operator libraries for running B2B outbound as a system."
+}
