@@ -25,7 +25,7 @@ Built by Creatop, a B2B outbound agency. Our full point of view is in `reference
 
 This library is **MCP-native**: everything below and in every other skill assumes Apollo shows up as typed `apollo_*` tools inside the model. That is the default and the right substrate for guardrailed, human-gated work. But there are four routes to the same API, and the choice decides how much context you burn and whether a job is possible at all:
 
-1. **MCP**: typed tools inside the model. Results always pass through context. **Prefer v2** (`https://mcp.apollo.io/mcp-v2`), which is a four-tool router rather than a 74-tool catalog: 1.6% of the schema preload, the same filter surface, and discovery built in.
+1. **MCP**: typed tools inside the model. Results always pass through context. **Prefer v2** (`https://mcp.apollo.io/mcp-v2`), which is a four-tool router rather than the full catalog (85 tools and about 485 KB on 2026-09-25, growing weekly): about 1% of the schema preload, the same filter surface, and discovery built in.
 2. **CLI binary** (`apollo auth login`): common filters, output to disk, composable and scriptable.
 3. **REST with the CLI's own token**: the **full MCP filter surface** with disk output, and no API key needed. The right lane for bulk work that needs advanced filters.
 4. **REST with an API key**: for building a separate service, not for running a motion. A master key also runs the MCP unattended.
@@ -112,7 +112,7 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 
 **On MCP v2 the same tools sit behind a router**: `apollo_find_tools`, `apollo_read`, `apollo_write`, and `apollo_write_destructive`. Look an action up with `apollo_find_tools` and use the name and dispatcher it returns rather than guessing. See `apollo-operator`.
 
-**The MCP and the REST API are not subsets of each other**, which is the trap. Mailbox purchasing and the Context Center are MCP-only. Deals, rate-limit stats, saved-account search, and email open and click stats are REST-only. Record collections and dynamic AI enrichment sit in between: the MCP v2 router documents them, but on 2026-09-14 they only ran when called directly on the v1 MCP with a master API key, and record collections also need an unreleased "AI Studio" access flag that no plan currently offers. Check both before concluding something is impossible. See `apollo-operator`.
+**The MCP and the REST API are not subsets of each other**, which is the trap. Mailbox purchasing and the Context Center are MCP-only. Deals, rate-limit stats, saved-account search, and email open and click stats are REST-only. Record collections, dynamic AI enrichment, data sources, and CSV exports were router-only on 2026-09-14 and **published and dispatchable on v2 by 2026-09-25**; record collections still need a plan gate Apollo currently calls "Sheets" (it said "AI Studio" eleven days earlier), which no plan offers and no profile call exposes. Check both before concluding something is impossible. See `apollo-operator`.
 
 ## Apollo ships its own AI agent, and this library sits beside it
 
@@ -120,7 +120,7 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 
 It is good at what it does. Tested 2026-09-16: `plan_gtm_campaign` read the account's Context Center, planned four campaign concepts against the real product lines, sized four audiences against live data, and stopped for confirmation without executing. It cost nothing.
 
-**Reachability, as of 2026-09-16.** Only on the v1 endpoint with a master API key. The v2 dispatcher returns `not_implemented`, and the Claude Code connector does not list the agent tools at all. So this is a capability to know about and plan around, not a step to put in a workflow today. Check it again rather than trusting this paragraph: Apollo moves faster than the library does.
+**Reachability, as of 2026-09-16, re-verified 2026-09-25.** Only on the v1 endpoint with a master API key. The v2 dispatcher returns `not_implemented` and its action enums carry no agent action, and the Claude Code connector did not list the agent tools on 2026-09-16. So this is a capability to know about and plan around, not a step to put in a workflow today. Check it again rather than trusting this paragraph: Apollo moves faster than the library does.
 
 **Where the line sits.** Apollo's agent is strongest at the front of the motion: who to target, what campaign to run, a first draft of copy. It does not check deliverability, verify addresses independently, grade list composition, suppress against prior campaigns, respect a warmup clock, or tell you whether a sized audience is worth sending to. That is the half this library exists for, and it is not a gap Apollo is likely to fill, because some of it is an argument against their own data.
 

@@ -13,7 +13,7 @@ All four hit the same Apollo API: the same data, enrichment, sequences, and CRM.
 
 | Lane | How work is invoked | Auth | Results go | Best for |
 |---|---|---|---|---|
-| **1. MCP** (library default) | Apollo appears as tools inside the model's context. **Prefer v2** (`https://mcp.apollo.io/mcp-v2`): four router tools instead of 74 | OAuth 2.0 in a connector, **or a master API key** (`X-Api-Key`) for unattended runs | **Through context, always** | Guardrailed, human-gated, in-conversation steps on small record counts |
+| **1. MCP** (library default) | Apollo appears as tools inside the model's context. **Prefer v2** (`https://mcp.apollo.io/mcp-v2`): four router tools instead of the full catalog (85 on 2026-09-25, and growing) | OAuth 2.0 in a connector, **or a master API key** (`X-Api-Key`) for unattended runs | **Through context, always** | Guardrailed, human-gated, in-conversation steps on small record counts |
 | **2. CLI binary** | A normal terminal command an agent shells out to, or a human, script, or cron runs | OAuth 2.0 (`apollo auth login`) | **To disk** | Bulk search and enrich with common filters, composable pipelines, reproducible jobs |
 | **3. REST + the CLI's own token** | `curl` against the same endpoint the MCP uses, authenticated with the token `apollo auth login` already stored | OAuth 2.0, **reuses the CLI's token, no API key** | **To disk** | **Bulk work that needs advanced filters.** The full MCP filter surface with the CLI's disk output. |
 | **4. REST + an API key** | You build your own client against the HTTP endpoints | API key (`x-api-key`, `APOLLO_API_KEY`). A **master** key also authenticates the MCP | Wherever you send them | Back-end services and integrations that run without a logged-in user |
@@ -30,7 +30,7 @@ Apollo explicitly warns not to confuse API access with MCP. They are different l
 
 For an agent running Operator, the real decision is MCP or CLI, because both can be driven from inside a Claude Code session.
 
-- **MCP v1** (`/mcp`) loads all 74 tool schemas, about 344 KB, into the model's context whether you use them or not. **MCP v2** (`/mcp-v2`) loads four router tools, about 5.6 KB, and looks up the rest on demand. Either way you get typed, structured, in-conversation calls the model cannot fat-finger.
+- **MCP v1** (`/mcp`) loads every tool schema into the model's context whether you use them or not: 74 tools and 344 KB on 2026-09-14, **85 tools and about 485 KB on 2026-09-25**, because the catalog grows every week. **MCP v2** (`/mcp-v2`) loads four router tools, about 6 KB, and looks up the rest on demand. Either way you get typed, structured, in-conversation calls the model cannot fat-finger.
 - **CLI** loads nothing upfront. The agent runs `apollo --help` on demand, then composes commands. It is deterministic (same command, same result), scriptable, version-controllable, and it runs with or without an AI in the loop.
 
 The one-liner: **MCP puts Apollo *inside* the model as tools. The CLI puts Apollo *under* the agent as a composable command it can pipe, script, and re-run.**
@@ -41,14 +41,14 @@ Be precise about this, because the obvious guess is wrong.
 
 | | Measured |
 |---|---|
-| One MCP v1 tool schema (`apollo_mixed_people_api_search`) | ~29 KB, roughly 7,000 tokens. It is 1 of 74. |
-| MCP v2 full tool list (the router) | 5.6 KB for all four tools, 1.6% of v1's 344 KB (measured 2026-09-14) |
+| One MCP v1 tool schema (`apollo_mixed_people_api_search`) | ~19 KB, roughly 5,000 tokens (2026-09-25; it was ~29 KB in July). It is 1 of 85. |
+| MCP v2 full tool list (the router) | 6.0 KB for all four tools, 1.2% of v1's 485 KB (2026-09-25; 5.6 KB against 344 KB, 1.6%, on 2026-09-14) |
 | CLI help, loaded on demand | `apollo --help` 1.9 KB · `people search --help` 3.0 KB · `sequences create --help` 0.9 KB |
 | **Response payload, same search both lanes** | **Byte-identical.** Same totals, same ids, same obfuscated preview shape. |
 
 So the CLI does **not** return leaner data. Its advantage is two other things:
 
-1. **Schema overhead.** On MCP v1 you pay for 74 tool definitions whether or not you use them. **MCP v2
+1. **Schema overhead.** On MCP v1 you pay for every tool definition whether or not you use them, 85 of them as of 2026-09-25. **MCP v2
    removes almost all of it**, so on v2 the CLI's real advantage is the second point.
 2. **Results can bypass context entirely.** `> leads.json` means the payload never reaches the
    model. MCP results always pass through context. In a real run, 3,238 people came down as 4 MB
@@ -64,17 +64,23 @@ is exactly the shape of List list work. MCP tool calls do not compose like that.
 
 `https://mcp.apollo.io/mcp-v2` exposes four tools: `apollo_find_tools` (natural-language search over the catalog, returning each tool's schema and the dispatcher that runs it), `apollo_read`, `apollo_write`, and `apollo_write_destructive`. The dispatcher split is Apollo's own safety classification, and it follows credits rather than verbs: `apollo_mixed_companies_search`, `apollo_people_match`, and `apollo_organizations_enrich` are destructive because they spend `lead_credit`, while `apollo_mixed_people_api_search` is a read because it is free.
 
-Measured against v1 on 2026-09-14:
+Measured against v1 twice, eleven days apart:
 
-| | v1 `/mcp` | v2 `/mcp-v2` |
-|---|---:|---:|
-| Tools listed | 74 | 4 |
-| Tool list size | 344 KB | 5.6 KB |
-| Same NAICS and headcount-growth search | 7,792 | 7,792 |
+| | v1 `/mcp` (2026-09-14) | v2 (2026-09-14) | v1 `/mcp` (2026-09-25) | v2 (2026-09-25) |
+|---|---:|---:|---:|---:|
+| Tools listed | 74 | 4 | 85 | 4 |
+| Tool list size | 344 KB | 5.6 KB | 485 KB | 6.0 KB |
+| Same NAICS and headcount-growth search | 7,792 | 7,792 | 7,829 | 7,829 |
+
+The v1 catalog grew by 11 tools in those eleven days and v2 stayed at four, which is the whole argument for the router in one row. Apollo's own count for the catalog is about 100; what one account is served is smaller and depends on plan and rollout.
+
+**How to call a dispatcher.** `apollo_read`, `apollo_write`, and `apollo_write_destructive` take `action` plus the action's own parameters **flattened at the top level** next to it (`additionalProperties: true`), not nested under a `parameters` or `arguments` key. Nesting them returns `Invalid params` with a suggestion to re-read the schema, and the schema will not tell you this, because the action's parameters are not in it. Example: `{"action": "apollo_mixed_people_api_search", "person_titles": ["founder"], "per_page": 25}`.
 
 Every v1 tool is dispatchable on v2, and the full filter surface passes through and is still validated. **Call `apollo_find_tools` first and use the action name it returns; never guess one.** What v2 does not change: results still come back through context, so bulk pulls still belong on lanes 2 and 3.
 
-**The router is ahead of its dispatcher.** `apollo_find_tools` also documents tools that are in no published list: record collections, CSV exports, field creation, dynamic AI enrichment, and domain authentication diagnosis. On 2026-09-14, dispatching them through v2 returned `not_implemented` on every auth method, calling them directly on v1 **with a master API key** worked, and the CLI's OAuth token was refused with `insufficient scope`. Record collections carry a third lock on top: creating one returns `You don't have access to AI Studio`. AI Studio is not a plan option or a documented product as of 2026-09-14, so it looks like an unreleased feature flag, and no profile or usage call exposes it, so the only way to know is to try.
+**The router runs ahead of its dispatcher, and the dispatcher catches up.** On 2026-09-14 `apollo_find_tools` documented 21 tools in no published list, and v2 refused to dispatch any of them. **By 2026-09-25, 11 of those had been published**: record collections (`apollo_custom_objects_create` / `show`, `apollo_custom_object_records_search`), fields (`apollo_fields_create` / `update`), dynamic AI enrichment (`apollo_dynamic_field_enrichment_enrich` and its `ongoing_enrichment_requests`), data sources (`apollo_data_sources_create`, `apollo_data_source_imports_create`), and CSV exports (`apollo_csv_exports_export_view` / `show`). They are in v1's tool list, in v2's dispatch enums, and in Apollo's public docs, and v2 dispatches them. Record collections still carry a plan gate: on our account the read returns `You don't have access to Sheets` (it said `AI Studio` on 2026-09-14; same lock, new name, still not a plan option or a documented product). No profile or usage call exposes the gate, so the only way to know is to try, and trying a read costs nothing.
+
+**Still unpublished on 2026-09-25, and still reachable only on v1 with a master API key:** the nine `apollo_agent_*` tools, `apollo_email_domain_diagnosis_authentication_status`, `apollo_domain_purchase_create`, and `apollo_prompts_suggest`. The pattern to expect: a tool appears in `find_tools` first, dispatches on v1 with a master key next, and lands in the v2 enums and the docs last. The CLI's OAuth token is refused with `insufficient scope` at every stage before the last. When v2 returns `not_implemented`, the message names the dispatcher (`'apollo_read' isn't available for your account yet`) rather than the action, so do not read it as every read being down.
 
 ### Apollo's own AI agent: nine tools, one agent, one route
 
@@ -94,13 +100,13 @@ The router advertises nine `apollo_agent_*` tools. **They are nine doors to the 
 
 **Lifecycle.** CREATE: pass an `instruction` and no `task_id`, get a `task_id` with status `running`, executing asynchronously in 30 to 90 seconds. POLL: pass the `task_id` alone. CONTINUE: pass both. **Poll with the same agent tool you created with.** The CREATE response tells you to poll `apollo_agent_task`; that tool does not exist and returns `TOOL_NOT_FOUND`.
 
-**One route only, as of 2026-09-16.**
+**One route only, as of 2026-09-16, re-verified 2026-09-25.**
 
 | Route | Result |
 |---|---|
-| v2 dispatcher (`apollo_write`) | `not_implemented`, and `apollo_write`'s own action enum contains no agent action |
-| Claude Code connector | Not in its tool list |
-| **v1 `/mcp` direct, master API key** | **Runs** |
+| v2 dispatcher (`apollo_write`) | `not_implemented`, and none of the three action enums contains an agent action (checked again 2026-09-25) |
+| Claude Code connector | Not in its tool list (2026-09-16; not re-checked since) |
+| **v1 `/mcp` direct, master API key** | **Runs** (2026-09-25: `explain_howto` answered a product question from Apollo's knowledge base in under ten seconds, free) |
 
 **Planning is free.** A full `plan_gtm_campaign` run, including four live audience sizings, moved no credit pool. Execution is a separate confirmed step and is not free, because it builds a list.
 
@@ -220,7 +226,7 @@ commands in `references/cli-recipes.md`.
 ## Setup (MCP)
 
 - **Connect it:** `claude mcp add --transport http apollo https://mcp.apollo.io/mcp`, then `/mcp` inside Claude Code to sign in. For the router version, use `https://mcp.apollo.io/mcp-v2` instead (see "MCP v2" above).
-- **Or install Apollo's plugin:** `/plugin marketplace add apolloio/apollo-mcp-plugin`, then `/plugin install apollo@apollo-plugin-marketplace`, and restart. It connects the same MCP and adds four slash commands (`/apollo:prospect`, `/apollo:enrich-lead`, `/apollo:sequence-load`, `/apollo:analytics`). Those commands are Apollo's quick paths; this library is the method around them, so the two sit side by side.
+- **Or install Apollo's plugin:** `/plugin marketplace add apolloio/apollo-mcp-plugin`, then `/plugin install apollo@apollo-plugin-marketplace`, and restart. It connects the same MCP (v1, `/mcp`, as of 2026-09-25) and adds five skills (`/apollo:prospect`, `/apollo:enrich-lead`, `/apollo:sequence-load`, `/apollo:analytics`, and `/apollo:gtm-strategist`, added 2026-09-16). The first four are Apollo's quick paths and this library is the method around them. The fifth overlaps this library's Targeting phase directly, so read it before assuming a job is ours: it is Apollo's own doctrine for audience building and execution, and the complement-not-compete rule in `operator-context` applies to it as much as to the agent tools.
 - **Unattended runs:** send a **master** API key in an `X-Api-Key` header instead of signing in. Scoped keys do not reach the MCP.
 - **Preflight:** `apollo_users_api_profile` confirms the connection, the same check `operator-context` uses.
 

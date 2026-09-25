@@ -1,7 +1,7 @@
 {
   "name": "apollo-operator",
   "description": "An opinionated go-to-market operator for Apollo.io: 20 skills that turn the raw Apollo MCP into a guided outbound motion. Targeting, list building, sequences, deliverability, launch, and iteration, with the traps that cost real money already encoded.",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "author": { "name": "Creatop", "url": "https://creatop.net" },
   "keywords": ["apollo", "outbound", "gtm", "sales", "prospecting", "email-deliverability", "mcp", "b2b"]
 }

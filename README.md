@@ -43,7 +43,7 @@ Most people know Apollo has an MCP and an API. There are four routes to the same
 
 The third is the one most people miss. `apollo auth login` stores an OAuth token, and that token authenticates against the same REST endpoint the MCP uses. So you get the **complete MCP filter surface** (NAICS, tenure, headcount growth, department headcounts) while writing results straight to disk. Measured against MCP on an identical query: same total, 3 MB to disk, nothing in the context window.
 
-Neither surface contains the other, which is worth knowing before you commit to one. Mailbox purchasing and the Context Center are MCP-only. Deals and rate-limit stats are REST and CLI but **not** MCP. And **Apollo's MCP v2 is a router**: four tools instead of 74, 1.6% of the context cost, and the same search results.
+Neither surface contains the other, which is worth knowing before you commit to one. Mailbox purchasing and the Context Center are MCP-only. Deals and rate-limit stats are REST and CLI but **not** MCP. And **Apollo's MCP v2 is a router**: four tools instead of the full catalog (85 on 2026-09-25, and growing), about 1% of the context cost, and the same search results.
 
 The rule it collapses to: **search wide off-context, act narrow on MCP.**
 
@@ -60,7 +60,7 @@ We build this on our own Apollo account, and running it is what finds the proble
 - **A provider's own `verified` status is not deliverability.** 997 addresses graded `verified` came back from an independent verifier as 564 safe to send, 413 catch-all, and 3 that would have bounced. Verification is a separate control, and it belongs before you write copy, not after.
 - **Bulk contact creation does not deduplicate**, despite documenting that it does. The same five contacts submitted twice produced two records each. Never retry on a timeout.
 - **Enrollment can fail silently.** Passing several contact ids to the CLI joins them into one string, so Apollo finds nothing and returns exit 0 with an empty campaign. Assert on the response body, never the exit code.
-- **Apollo's MCP router documents more than it will run.** MCP v2 describes record collections and dynamic AI enrichment, then refuses to dispatch them. The same tools run on the v1 MCP with a master API key, and the CLI's login cannot reach them at all. Record collections also need "AI Studio" access, which is not a plan you can buy today.
+- **Apollo's MCP router runs ahead of its dispatcher, and the dispatcher catches up.** A tool appears in `apollo_find_tools` first, runs on the v1 MCP with a master API key next, and lands in v2's dispatch list and the docs last; the CLI's login cannot reach it until that last step. Eleven tools made that journey between 2026-09-14 and 2026-09-25, record collections and CSV exports among them. The nine agent tools have not yet. Record collections also need a plan gate Apollo currently calls "Sheets", which is not a plan you can buy today.
 - **You pay per record attempted at enrichment, not per email found**, and re-enriching a record you already paid for charges again.
 - **Credits are eleven separate pools**, not one balance, and the AI pool is 200 times the size of the contact-data pool. Data is the scarce resource, not generation.
 

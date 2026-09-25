@@ -3,6 +3,30 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## v1.4.1 (2026-09-25)
+
+**Kept current, four days after v1.4.0.** Apollo published MCP v2 on 2026-09-23, so the numbers
+were re-measured against the live endpoints. The catalog moved under us in eleven days.
+
+- **The v1 catalog is 85 tools and about 485 KB** (2026-09-25), up from 74 and 344 KB on
+  2026-09-14. v2 is still four tools and about 6 KB, so the router's share of the preload fell from
+  1.6% to 1.2% without Apollo changing v2 at all. Both dates now sit side by side in the lanes skill.
+  The same search returned 7,829 on both endpoints.
+- **Eleven formerly unpublished tools are now published and dispatch on v2:** record collections,
+  fields, dynamic AI enrichment, data sources, and CSV exports. They are in v1's list, in v2's
+  dispatch enums, and in Apollo's docs. The record-collection plan gate is now called "Sheets"
+  (it was "AI Studio"); still not a plan you can buy. The lanes skill now describes the journey a
+  tool takes from `find_tools` to the docs, instead of a fixed list of what is missing.
+- **Still v1 with a master key only:** the nine agent tools, domain authentication diagnosis,
+  domain purchase, and prompt suggestions. Agent reachability re-verified; the how-to agent
+  answers product questions from Apollo's knowledge base in under ten seconds, free.
+- **How to call a v2 dispatcher:** the action's own parameters go flat at the top level next to
+  `action`, not nested. Nesting them fails with `Invalid params` and the schema does not say why.
+- **Apollo's plugin ships five skills now**, not four: a `gtm-strategist` skill landed on
+  2026-09-16 and overlaps this library's Targeting phase. Noted in Setup with the same
+  complement-not-compete rule that applies to the agent tools.
+- The people-search schema is about 19 KB today, not the 29 KB measured in July.
+
 ## v1.4.0 (2026-09-21)
 
 **MCP v2, Apollo's own agent, and three new skills.** Apollo shipped a four-tool router in place of
