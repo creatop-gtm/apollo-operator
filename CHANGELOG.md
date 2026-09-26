@@ -3,7 +3,7 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
-## v1.4.1 (2026-09-25)
+## Unreleased
 
 **Kept current, four days after v1.4.0.** Apollo published MCP v2 on 2026-09-23, so the numbers
 were re-measured against the live endpoints. The catalog moved under us in eleven days.
