@@ -3,36 +3,43 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
-## Unreleased
+## v1.4.1 (2026-09-28)
 
-**Kept current after Apollo published MCP v2.** Apollo posted v2 publicly on 2026-09-23, so every
-number in the library was re-measured against the live endpoints on 2026-09-25 and checked again on
-2026-09-28. The catalog moved under us in eleven days, and Apollo's own plugin gained a strategy
-skill this library now positions itself beside.
+**Built to sit beside Apollo's own tools.** Apollo published MCP v2 on 2026-09-23 and its Claude
+Code plugin gained a strategy skill. This release re-measures the library against the live endpoints
+and repositions it around one rule: where Apollo now does a step well, the library offers Apollo's
+way first and picks up where it hands off. Complementary, not parallel. Same 20 skills.
 
-- **The v1 catalog is 85 tools and about 485 KB** (2026-09-25), up from 74 and 344 KB on
-  2026-09-14. v2 is still four tools and about 6 KB, so the router's share of the preload fell from
-  1.6% to 1.2% without Apollo changing v2 at all. Both dates now sit side by side in the lanes skill.
-  The same search returned 7,829 on both endpoints.
-- **Eleven formerly unpublished tools are now published and dispatch on v2:** record collections,
-  fields, dynamic AI enrichment, data sources, and CSV exports. They are in v1's list, in v2's
-  dispatch enums, and in Apollo's docs. The record-collection plan gate is now called "Sheets"
-  (it was "AI Studio"); still not a plan you can buy. The lanes skill now describes the journey a
-  tool takes from `find_tools` to the docs, instead of a fixed list of what is missing.
-- **Still v1 with a master key only:** the nine agent tools, domain authentication diagnosis,
-  domain purchase, and prompt suggestions. Agent reachability re-verified; the how-to agent
-  answers product questions from Apollo's knowledge base in under ten seconds, free.
-- **How to call a v2 dispatcher:** the action's own parameters go flat at the top level next to
-  `action`, not nested. Nesting them fails with `Invalid params` and the schema does not say why.
-- **Apollo's GTM Strategist skill, read and positioned.** Apollo's plugin ships five skills now,
-  not four: `/apollo:gtm-strategist` (2026-09-16) turns a pipeline goal into one recommended play,
-  with diagnose-before-search reasoning, evidence labelled verified or inferred, a 20 to 30 account
-  validation cohort, and the tool's own approval gates. It runs on the ordinary connector, so it is
-  the overlap an operator can actually reach today. The library now offers it where Targeting starts
-  and states where it hands off: it has no warmup clock, no independent verification, no composition
-  grading, no suppression, no per-company cap, no attrition math, and no reporting past the reply.
-  Position in `apollo-icp-builder` 6c, the rule in `operator-context`, the pointer in Setup.
+### Kept current
+
+- **The router is the default, and the numbers behind that are fresh.** On 2026-09-25 the v1
+  catalog listed 85 tools and about 485 KB of schema; v2 exposed the same catalog through four tools
+  and about 6 KB. The same NAICS and headcount-growth search returned 7,829 on both. Both dates now
+  sit side by side in the lanes skill, so a reader can see how the catalog moves.
+- **The catalog grew by 11 tools in eleven days, and v2 stayed at four.** Record collections,
+  fields, dynamic AI enrichment, data sources, and CSV exports are now in Apollo's docs and dispatch
+  through v2. That is the router doing exactly what it was built for. Record collections are gated to
+  a feature Apollo currently calls Sheets, so check access before planning a build around them.
+- **What still runs on v1 with a master key:** the nine agent tools, domain authentication
+  diagnosis, domain purchase, and prompt suggestions. Reachability re-verified 2026-09-25 and again
+  2026-09-28; the how-to agent answers product questions from Apollo's knowledge base in under ten
+  seconds, free. The library offers the agent where it overlaps and routes what comes back through
+  List and Infrastructure.
+- **How to call a v2 dispatcher:** pass the action's own parameters flat at the top level next to
+  `action`. Documented with an example so nobody has to find it by trial.
 - The people-search schema is about 19 KB today, not the 29 KB measured in July.
+
+### Positioned
+
+- **Apollo's GTM Strategist skill.** Apollo's plugin ships five skills now, and
+  `/apollo:gtm-strategist` (2026-09-16) turns a pipeline goal into one recommended play: diagnose
+  before searching, evidence labelled verified or inferred, a 20 to 30 account validation cohort,
+  the tool's own approval gates. It runs on the ordinary connector, so an operator may well have it
+  installed beside this library, and it is good. The library now offers it where Targeting starts
+  and takes the handoff it describes itself: warmup and deliverability, independent verification,
+  composition grading, suppression, per-company caps, the attrition between a sized audience and a
+  sendable list, and reporting past the reply. Position in `apollo-icp-builder` 6c, the rule in
+  `operator-context`, the pointer in Setup.
 
 ## v1.4.0 (2026-09-21)
 
