@@ -5,8 +5,10 @@ All notable changes to Apollo Operator are documented here. This project uses
 
 ## Unreleased
 
-**Kept current, four days after v1.4.0.** Apollo published MCP v2 on 2026-09-23, so the numbers
-were re-measured against the live endpoints. The catalog moved under us in eleven days.
+**Kept current after Apollo published MCP v2.** Apollo posted v2 publicly on 2026-09-23, so every
+number in the library was re-measured against the live endpoints on 2026-09-25 and checked again on
+2026-09-28. The catalog moved under us in eleven days, and Apollo's own plugin gained a strategy
+skill this library now positions itself beside.
 
 - **The v1 catalog is 85 tools and about 485 KB** (2026-09-25), up from 74 and 344 KB on
   2026-09-14. v2 is still four tools and about 6 KB, so the router's share of the preload fell from
@@ -22,9 +24,14 @@ were re-measured against the live endpoints. The catalog moved under us in eleve
   answers product questions from Apollo's knowledge base in under ten seconds, free.
 - **How to call a v2 dispatcher:** the action's own parameters go flat at the top level next to
   `action`, not nested. Nesting them fails with `Invalid params` and the schema does not say why.
-- **Apollo's plugin ships five skills now**, not four: a `gtm-strategist` skill landed on
-  2026-09-16 and overlaps this library's Targeting phase. Noted in Setup with the same
-  complement-not-compete rule that applies to the agent tools.
+- **Apollo's GTM Strategist skill, read and positioned.** Apollo's plugin ships five skills now,
+  not four: `/apollo:gtm-strategist` (2026-09-16) turns a pipeline goal into one recommended play,
+  with diagnose-before-search reasoning, evidence labelled verified or inferred, a 20 to 30 account
+  validation cohort, and the tool's own approval gates. It runs on the ordinary connector, so it is
+  the overlap an operator can actually reach today. The library now offers it where Targeting starts
+  and states where it hands off: it has no warmup clock, no independent verification, no composition
+  grading, no suppression, no per-company cap, no attrition math, and no reporting past the reply.
+  Position in `apollo-icp-builder` 6c, the rule in `operator-context`, the pointer in Setup.
 - The people-search schema is about 19 KB today, not the 29 KB measured in July.
 
 ## v1.4.0 (2026-09-21)

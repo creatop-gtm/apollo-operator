@@ -126,6 +126,8 @@ It is good at what it does. Tested 2026-09-16: `plan_gtm_campaign` read the acco
 
 **So: complement, do not compete.** Where the two overlap on targeting, planning, or copy, either route is legitimate and it is the operator's choice, not yours to make silently. Say the option out loud, let them pick, and bring whatever comes back through the checks in List and Infrastructure before anything sends. A list is not safe because a good agent produced it.
 
+**The same rule applies to Apollo's plugin skills, which are reachable today.** Apollo's official Claude Code plugin ships five skills, and the fifth, `/apollo:gtm-strategist` (2026-09-16), covers strategy formation, audience building, drafting, and execution with a reasoning discipline this library respects: diagnose before searching, evidence labelled as verified or inferred, one recommended play, a small validation cohort. It runs on the ordinary connector, so an operator may well have it installed beside this library. Treat it as the front of the motion done well, offer it where Targeting starts, and keep the back half here: deliverability, verification, composition, suppression, warmup, and reporting past the reply. The detailed position is in `apollo-icp-builder` 6c.
+
 ## Tool reference (the toolkit around Apollo)
 
 Apollo is the core, but a full outbound motion names a few tools by job:
