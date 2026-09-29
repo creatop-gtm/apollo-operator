@@ -3,8 +3,21 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
-## Unreleased
+## v1.4.2 (2026-09-29)
 
+**Now in Codex, and in any chat.** The same 20 skills install as a Codex plugin from this repo,
+and a start-here prompt runs the method in ChatGPT or any other chat. Everything sits beside
+Apollo's own tools: where Apollo's AI actions fit a step, the operator names them as an option and
+asks before running one.
+
+- **Codex plugin.** `codex plugin marketplace add creatop-gtm/apollo-operator`, then
+  `codex plugin add apollo-operator@creatop`. It lives in `plugins/apollo-operator/` beside the
+  untouched Claude plugin, rendered from the same source. Each skill also ships a version for a
+  chat without a terminal, with the same cost gate, bounded reads, and deliverability rules.
+  Installed from GitHub in a clean profile: 20 skills.
+- **Apollo's AI actions are offered, not avoided.** If discovery lists an `apollo_agent_*` action
+  for the job, the operator names it alongside the method, says what it may spend or create, and
+  waits for a yes. What it returns still goes through List and Infrastructure before anything sends.
 - **Two broken references fixed.** `business-brief` and `apollo-icp-builder` pointed to
   `references/outbound-principles.md` in their own folders; the file lives in
   `operator-context/references/`. Both layouts corrected.

@@ -72,14 +72,14 @@ If a step would spend more than 85% of your remaining credits, it stops and offe
 
 ## Requirements
 
-- Claude Code
-- The Apollo MCP connected
+- Claude Code or Codex (or any AI chat, through the prompts at creatop.net/apollo-operator)
+- The Apollo MCP connected (in Codex, the Apollo app connection)
 - The Apollo CLI (`brew install apolloio/apollo-io-cli/apollo-io-cli`) for bulk work and the kill switch
 - An email verification service. Pick your own; this library does not choose one for you.
 
 ## Install
 
-Three ways in. The first is the one most people want.
+Pick the way in that matches your tool. For Claude Code, the plugin is the one most people want.
 
 **As a plugin** (available in every session, from any directory, and updatable):
 
@@ -87,6 +87,17 @@ Three ways in. The first is the one most people want.
 /plugin marketplace add creatop-gtm/apollo-operator
 /plugin install apollo-operator@creatop
 ```
+
+**In Codex** (the same 20 skills, adapted for Codex, plus a version of each for a chat without a terminal):
+
+```
+codex plugin marketplace add creatop-gtm/apollo-operator
+codex plugin add apollo-operator@creatop
+```
+
+Start a new chat after installing so the skills load, and finish Apollo's sign-in in the app connection screen if it asks. The Codex plugin lives in `plugins/apollo-operator/` and is rendered from the same source as the Claude skills.
+
+**In ChatGPT or any other chat:** copy the start-here prompt from https://creatop.net/apollo-operator. It works out where you are and reads each step's method from this repo.
 
 **As your own skills** (no plugin machinery, same result):
 
