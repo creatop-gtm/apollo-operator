@@ -1,0 +1,29 @@
+{
+  "name": "apollo-operator",
+  "version": "1.4.2+openai.9",
+  "description": "Apollo Operator, an open-source headless GTM toolkit by Creatop, a B2B outbound agency.",
+  "author": {
+    "name": "Creatop",
+    "url": "https://creatop.net"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/creatop-gtm/apollo-operator",
+  "skills": "./skills/",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Apollo Operator",
+    "shortDescription": "An open-source headless GTM toolkit.",
+    "longDescription": "Apollo Operator is an open-source headless GTM toolkit by Creatop, a B2B outbound agency. Twenty skills complement Apollo’s tools with targeting, list quality, deliverability, copy review, and campaign reporting.",
+    "developerName": "Creatop",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Help me define my ideal customers and build an Apollo search.",
+      "Audit my Apollo account without changing anything.",
+      "Draft a three-step sequence for my target customers."
+    ]
+  }
+}

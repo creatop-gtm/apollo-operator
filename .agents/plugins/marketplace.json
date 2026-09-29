@@ -1,0 +1,20 @@
+{
+  "name": "creatop",
+  "interface": {
+    "displayName": "Creatop"
+  },
+  "plugins": [
+    {
+      "name": "apollo-operator",
+      "source": {
+        "source": "local",
+        "path": "./plugins/apollo-operator"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
