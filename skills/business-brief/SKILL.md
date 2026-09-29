@@ -18,7 +18,7 @@ This is where context enters the system. `apollo-icp-builder` turns the brief in
 
 ## Principle
 
-Read `references/outbound-principles.md` if you have not. The one that drives this skill: outbound is a system game, and account knowledge is part of the system. A brief that compounds beats a memory that resets every session.
+Read `../operator-context/references/outbound-principles.md` if you have not. The one that drives this skill: outbound is a system game, and account knowledge is part of the system. A brief that compounds beats a memory that resets every session.
 
 Two rules of the brief itself:
 

@@ -2,9 +2,9 @@
 
 **An opinionated go-to-market operator for Apollo.io, built as open-source Claude Code skills.**
 
-The Apollo MCP can run your entire outbound motion. It just has no idea how. Point it at your account raw and it will run any search, build any sequence, and send any email you ask for, with no reason to tell you the targeting is off, the copy reads like a robot, or the send will burn your domain. It does what you say, not what you meant.
+Apollo's MCP puts your whole Apollo account inside your AI assistant: search, enrichment, sequences, and sending, all in plain language. Apollo's own plugin adds a strategy skill on top, and it is good. What no tool can hand you is the judgment an operator brings to every step: whether a list is worth sending, when a domain is ready, whether the copy reads like a person, and what the results actually mean.
 
-Apollo Operator is the knowledge layer. It is a GTM system of 20 skills that turn the raw MCP into a guided outbound motion: understanding the business, who to target, how to build and grade a list, how to write sequences that get replies, how to build the sending infrastructure and take campaigns live without torching your domain, and how to tell whether any of it is actually working.
+Apollo Operator is that judgment, written down. It is 20 skills that sit beside Apollo's own tools and run outbound on the Apollo MCP in order: understanding the business, who to target, how to build and grade a list, how to write sequences that get replies, how to build the sending infrastructure and take campaigns live without torching your domain, and how to tell whether any of it is actually working.
 
 ## What it runs
 

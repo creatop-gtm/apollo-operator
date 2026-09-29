@@ -3,6 +3,14 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## Unreleased
+
+- **Two broken references fixed.** `business-brief` and `apollo-icp-builder` pointed to
+  `references/outbound-principles.md` in their own folders; the file lives in
+  `operator-context/references/`. Both layouts corrected.
+- **README and plugin description reworded** to credit what Apollo's MCP and plugin do and to
+  describe the library as sitting beside them.
+
 ## v1.4.1 (2026-09-28)
 
 **Built to sit beside Apollo's own tools.** Apollo published MCP v2 on 2026-09-23 and its Claude

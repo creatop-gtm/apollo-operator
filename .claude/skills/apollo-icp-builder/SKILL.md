@@ -17,7 +17,7 @@ This is the front door. Nothing downstream is honest without it. A great sequenc
 
 ## Principle
 
-Read `references/outbound-principles.md` if you have not. The two that drive this skill:
+Read `../operator-context/references/outbound-principles.md` if you have not. The two that drive this skill:
 - **Scoring is custom, not a universal rubric.** Define one to three data points that actually separate good fit from bad for this client. Do not import a generic 100-point model.
 - **Validate with samples.** Pull 50 to 100 real prospects and get a human "yes, this is my customer" before building the full list. Never skip this.
 
