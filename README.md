@@ -1,6 +1,6 @@
 # Apollo Operator
 
-**An opinionated go-to-market operator for Apollo.io, built as open-source Claude Code skills.**
+**An opinionated go-to-market operator for Apollo.io: open-source skills for Claude Code, Codex, and any AI chat.**
 
 Apollo's MCP puts your whole Apollo account inside your AI assistant: search, enrichment, sequences, and sending, all in plain language. Apollo's own plugin adds a strategy skill on top, and it is good. What no tool can hand you is the judgment an operator brings to every step: whether a list is worth sending, when a domain is ready, whether the copy reads like a person, and what the results actually mean.
 
@@ -81,7 +81,7 @@ If a step would spend more than 85% of your remaining credits, it stops and offe
 
 Pick the way in that matches your tool. For Claude Code, the plugin is the one most people want.
 
-**As a plugin** (available in every session, from any directory, and updatable):
+**In Claude Code, as a plugin** (available in every session, from any directory, and updatable):
 
 ```
 /plugin marketplace add creatop-gtm/apollo-operator

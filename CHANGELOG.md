@@ -3,6 +3,11 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## Unreleased
+
+- **README and marketplace descriptions** now say the skills run in Claude Code, Codex, and any AI
+  chat, not Claude Code only.
+
 ## v1.4.2 (2026-09-29)
 
 **Now in Codex, and in any chat.** The same 20 skills install as a Codex plugin from this repo,

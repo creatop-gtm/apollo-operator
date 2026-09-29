@@ -9,7 +9,7 @@
     {
       "name": "apollo-operator",
       "source": "./",
-      "description": "An opinionated go-to-market operator for Apollo.io, built as open-source Claude Code skills."
+      "description": "An opinionated go-to-market operator for Apollo.io: open-source skills for Claude Code, Codex, and any AI chat."
     }
   ],
   "description": "Creatop's open-source operator libraries for running B2B outbound as a system."
