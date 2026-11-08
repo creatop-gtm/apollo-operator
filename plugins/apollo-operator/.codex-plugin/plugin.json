@@ -1,6 +1,6 @@
 {
   "name": "apollo-operator",
-  "version": "1.4.2+openai.9",
+  "version": "1.5.0+openai.1",
   "description": "Apollo Operator, an open-source headless GTM toolkit by Creatop, a B2B outbound agency.",
   "author": {
     "name": "Creatop",

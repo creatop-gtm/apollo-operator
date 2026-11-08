@@ -22,11 +22,9 @@ Load this reference once per conversation. For outbound work, read the sibling O
 
 ## Apollo connector protocol
 
-The Apollo connector uses the v2 router: `apollo_find_tools`, `apollo_read`, `apollo_write`, and `apollo_write_destructive`. Discover the action with `apollo_find_tools` first, and use the exact action name and dispatcher returned. Never guess action names. A host may add a namespace to the callable tool names; use the actual discovered tools.
+The Apollo connector exposes Apollo's tools directly from `https://mcp.apollo.io/mcp`; the earlier v2 router (`apollo_find_tools` and its dispatchers) is retired. Use the tools the connection actually lists, with their exact names. Never guess a tool name. A host may add a namespace to the callable tool names; use the actual listed tools. Read each tool's input schema before calling it.
 
-Dispatcher arguments are flat: place each action parameter at the top level beside `action`. Do not nest action inputs under `parameters` or `arguments`. Read the current input schema for the action before calling it.
-
-The dispatcher is a cost signal. Anything dispatched through `apollo_write_destructive` spends credits or changes live state: state the action, credit pool, cost, and remaining balance, and get an explicit yes first. `apollo_write` is not a safety guarantee; inspect what the action does. Offer a discovered `apollo_agent_*` action as an option, but do not dispatch it until the operator chooses it and explicitly approves its described effects and any established cost. Do not switch authentication methods to reach an unavailable action.
+Each tool's annotations are a cost signal. A tool marked `destructiveHint` spends credits or changes live state: state the action, credit pool, cost, and remaining balance, and get an explicit yes first. Where a tool description gives an exact confirmation sentence, say it as written. The hint does not describe what the tool does; read its description. Offer a discovered `apollo_agent_*` action as an option, but do not dispatch it until the operator chooses it and explicitly approves its described effects and any established cost. Do not switch authentication methods to reach an unavailable action.
 
 Confirm account identity using a discovered profile read before account work. For sending work, also check mailbox state. If the connector is unavailable, continue planning from user-provided facts and give precise Apollo interface steps for the parts requiring account access.
 
@@ -34,7 +32,7 @@ Confirm account identity using a discovered profile read before account work. Fo
 
 Apollo Operator complements Apollo's own tools. When Apollo's prospecting, enrichment, sequence loading, analytics, or GTM Strategist skill is available and fits the request, offer that skill first. Use its result as the input to the relevant Operator skill. Continue with deliverability, independent verification, list quality, suppression, copy review, and reporting as needed. Do not imply those optional skills are installed without checking.
 
-Apollo's own AI actions (`apollo_agent_*`) are another option at the front of the motion: prospecting, campaign planning, and sequence drafting. If discovery lists a relevant action, name it alongside this method and let the operator choose. Before dispatch, explain its effects, whether it may spend credits or create records, the current cost and balance when applicable, and ask for an explicit yes. `apollo_write` does not guarantee a free or harmless action. If price or balance is unknown, resolve it before dispatch. Run anything returned through List and Infrastructure before sending. Never run an AI action unattended or switch authentication to reach one.
+Apollo's own AI actions (`apollo_agent_*`) are another option at the front of the motion: prospecting, campaign planning, and sequence drafting. If discovery lists a relevant action, name it alongside this method and let the operator choose. Before dispatch, explain its effects, whether it may spend credits or create records, the current cost and balance when applicable, and ask for an explicit yes. Every AI action is marked `destructiveHint`, which says to stop and ask, not what the action does. If price or balance is unknown, resolve it before dispatch. Run anything returned through List and Infrastructure before sending. Never run an AI action unattended or switch authentication to reach one.
 
 ## Shared operating rules
 

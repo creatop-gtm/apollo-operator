@@ -70,7 +70,7 @@ Paginate 100 per page, up to Apollo's 50,000-record ceiling (500 pages). Collect
 **Pick your lane first** (see `apollo-operator`):
 
 - **CLI**, when the filters are expressible as CLI flags and the list runs to hundreds or thousands. Results redirect to disk and never enter the model's context. A real run pulled 3,238 people into 4 MB on disk with nothing in the window, which simply does not fit over MCP.
-- **MCP** (`apollo_mixed_people_api_search`), when the ICP needs a filter the CLI does not have: NAICS, SIC, founded year, headcount growth, tenure, years of experience, market segments, LinkedIn URL lookup, or person-level website visitors. Department headcount was on this list until CLI v2.1.0, so check `--help` before assuming a filter is still MCP-only. The CLI is not a superset.
+- **MCP** (`apollo_mixed_people_api_search`), when the ICP needs a filter the CLI does not have: founded year, tenure, years of experience, market segments, LinkedIn URL lookup, or person-level website visitors. NAICS, SIC, and headcount growth moved into the CLI in v2.2.0 (2026-10-28), department headcount in v2.1.0, so check `--help` before assuming a filter is still MCP-only, and sign in again after upgrading. The CLI is not a superset.
 
 The CLI loop, with the exact `people_search_filters` from `profile.yaml`:
 
@@ -221,7 +221,7 @@ done
 jq -s '[.[].matches[]?] | unique_by(.id)' batches/*.out.json > enriched_full.json
 ```
 
-- **The MCP alternative, untested end to end.** Discover record-collection and enrichment actions and account access before planning around them. **Status 2026-09-14:** the router documented record collections but its dispatcher refused them; the CLI OAuth token was also refused, and accounts without AI Studio access returned `You don't have access to AI Studio`. AI Studio was not a listed plan option, billing item, or documented product. **State on 2026-09-25:** the record-collection tools were published and dispatched on MCP v2, but this account returned `You don't have access to Sheets`, a gate no plan listed. Do not infer an upgrade or change authentication to bypass a gate. Prefer the documented local CLI path when an authorized terminal is available; otherwise mark the unsupported bulk step unperformed.
+**Read each action's effect.** Apollo AI actions are marked destructive and can spend credits, create records, or overwrite live copy. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
 
 **Check the response, do not assume.** Each call returns `credits_consumed`, `total_requested_enrichments`, `matches`, and `missing_records`. Report the real `credits_consumed`, summed across batches.
 
@@ -248,9 +248,9 @@ A list that only exists as a CSV on your drive is not a list your client can see
 
 **`mixed_people/add_to_my_prospects` is not available to a script.** This is the endpoint the UI uses for "save these search results", and it returns `403 API_INACCESSIBLE` on the CLI's OAuth token. Verified 2026-08-31, and it is the only endpoint found so far that this token cannot reach, so lane 3 is *not* a complete superset of the UI.
 
-That leaves `contacts/bulk_create` as the only programmatic way in, and it carries the no-dedupe defect from the gotchas below. So:
+That leaves `contacts/bulk_create` as the only programmatic way in, and over REST it does not dedupe unless you ask (see the rules below). So:
 
-1. **Create the contacts in checkpointed batches of 100**, recording each batch as complete *before* issuing the next call. Because bulk create does not dedupe, a naive re-run after a mid-way failure duplicates everything it already created. The checkpoint is what makes a re-run safe.
+1. **Create the contacts in checkpointed batches of 100**, recording each batch as complete *before* issuing the next call, and send `run_dedupe: true` on REST. Without it, a naive re-run after a mid-way failure duplicates everything it already created. The checkpoint is what makes a re-run safe either way.
 2. **Attach the list afterwards** with `labels/add_entity_ids_to_label_names`, passing `entity_ids`, `label_names`, and `modality: "contacts"`. `label_names` on bulk create is silently ignored, so this second call is mandatory, not optional.
 3. **Confirm by count.** `apollo labels list` returns `cached_count` per list. It should equal the number you uploaded.
 
@@ -274,6 +274,25 @@ Every email gets verified before it can be sent to. Unverified means bounce risk
 **Apollo called every one of those 997 verified, and only 57% were actually safe to send.** The 41% catch-all share is normal and expected. The three **Invalid** are the point: they were graded `verified` by the provider and would have bounced. Three bounces inside a small first batch is a live deliverability incident on a young domain, and no amount of good copy prevents it.
 
 So "narrow to verified at search time" (step 1) and "verify independently" (this step) are **not** the same control and neither replaces the other. The first stops you paying to enrich rubbish. The second stops you sending to it.
+
+**Apollo now has a validation check of its own, and it is a different control from `email_status`.** `apollo_email_validation_validate` (published by 2026-11-08) sends addresses you already have to an outside validation vendor and reports `validated` or `not_validated`, naming the validator that answered. Three facts decide where it fits:
+
+- **It costs up to 1 lead credit per address**, sometimes 0, from the same scarce pool as enrichment, and a repeat check inside the cache window is still charged. A dedicated verification service costs a fraction of a cent per address.
+- **It runs 10 addresses per call, asynchronously**, through `apollo_webhook_result_show`. The tool asks you to say an exact confirmation sentence with the count before running it.
+- **`not_validated` is not "invalid".** It also covers catch-all domains and checks that reached no verdict, so it does not separate the three buckets below.
+
+**Measured against an independent verifier, 2026-11-08.** Ten addresses an independent verifier had already graded, run through Apollo's check (the vendor that answered was LeadMagic). It cost **9 lead credits for 10 addresses**.
+
+| Independent verifier said | Count | Apollo said |
+|---|---:|---|
+| Safe to send | 4 | validated, all four |
+| Invalid (bounce) | 2 | not validated, both |
+| Risky (catch-all) | 3 | **validated, all three** |
+| Unknown (unreachable) | 1 | **validated** |
+
+They agree on the clear cases. They part on exactly the addresses this step exists for: **Apollo's check returned `validated` for every catch-all and the unreachable one.** Its vendor may resolve some catch-alls that a standard verifier cannot, or it may be generous; ten addresses cannot tell you which, and only your own bounce data will. What it does settle: Apollo's check does not flag catch-alls, so it cannot be the control that holds them back on a new sending stack.
+
+So use it where it is the convenient tool: a handful of addresses inside a conversation, an account-based list of 30 named people, a spot-check before re-engaging a small segment. For a full list, the dedicated service below stays the deciding vote, on cost and because it sorts catch-alls and unknowns apart.
 
 **Use a dedicated email-verification service, and treat it as the deciding vote.** Any data provider's own email status, Apollo's included, is a useful first filter: narrowing to verified at search time (step 1) is what stops you paying to enrich addresses you would throw away. But a provider grading its own data is not an independent check, and the two layers answer different questions. The provider tells you the address exists in its database. A verifier tells you what the receiving mail server will actually do today.
 
@@ -315,10 +334,11 @@ A clean, enriched, verified, graded list, with scoring tags, ready for **Message
 The way to put a list into Apollo is section 6b: create the contacts in checkpointed batches, then attach the list with a separate label call. `label_names` on create is silently ignored, so never rely on it. The rules below apply to every contact write, 6b included.
 
 Two hard-won rules here:
-- **Bulk create does NOT deduplicate, whatever the tool description says. Verified 2026-08-31.** `apollo_contacts_bulk_create` and `POST /contacts/bulk_create` state plainly that "Apollo automatically prevents duplicates: any object that matches an existing contact by email or other details updates that existing contact instead of creating a new record." **That is not what happens.** Submitting the same five contacts twice produced two records per email; submitting two of them a third time produced three. Every call creates new records, and identical emails do not collide. The count of records per email exactly equals the number of times it was submitted. Two consequences: **never retry a bulk create on timeout or uncertainty**, because a retry duplicates rather than reconciles, and **dedupe your payload before sending**, since the API will not do it for you. If you need certainty that a record is updated rather than added, search for it first and use `apollo_contacts_update` on the id you find. The historical ghost-contact failure (`existence_level: "none"`, invisible in the UI) does appear to be fixed: records now land properly with `person_id` and `organization_id` populated and are findable by `contacts/search`. The duplication is a separate and current defect. Also verified in the same run: **`label_names` on bulk create silently does nothing.** No label was created and none was attached. Add contacts to a list afterwards with `apollo_labels_add_entity_ids_to_label_names` instead.
+- **Bulk create dedupes on one surface and not the other, and updates on neither. Verified 2026-09-29.** On MCP, `apollo_contacts_bulk_create` now matches by email: sent twice, the second call returned the same ids under `existing_contacts`. But its description promises that a match *updates* the existing contact, and it does not: a changed `last_name` came back unchanged. Over REST, `POST /contacts/bulk_create` **creates a new record on every call** unless you send `run_dedupe: true`, which Apollo's REST docs now say plainly. (On 2026-08-31 neither surface deduped: the same five contacts sent twice made two records per email.) So a pipeline that moves from MCP to a script starts creating duplicates silently, and every retry adds another. Two consequences: **never retry a REST bulk create without `run_dedupe: true`**, and **dedupe your payload before sending** either way. If you need certainty that a record is updated rather than added, search for it first and use `apollo_contacts_update` on the id you find. The historical ghost-contact failure (`existence_level: "none"`, invisible in the UI) does appear to be fixed: records now land properly with `person_id` and `organization_id` populated and are findable by `contacts/search`. The duplication is a separate and current defect. Also verified in the same run: **`label_names` on bulk create silently does nothing.** No label was created and none was attached. Add contacts to a list afterwards with `apollo_labels_add_entity_ids_to_label_names` instead.
 - **Bulk create is destructive on a match.** Where it matches an existing contact, the values you send **overwrite** that contact's current fields, and that cannot be undone. Do not push a thin record over a rich one.
 - **Single create behaves differently from bulk create, and that is its own trap. Verified 2026-09-14.** `apollo_contacts_create` does match on email: it returned `was_existing: true` and updated the existing record rather than adding a second one. But it **overwrote that record's first and last name** with the test values sent. A keyword search for the person beforehand had returned nothing, so an empty search is not proof the contact is absent. **Never create a test contact with a real person's address**, including your own; use an address nobody's record carries, or search by the exact email first.
 - **Verify, do not trust the response.** After creating, confirm with `apollo_contacts_search` (by name or keyword) that the contact actually landed. A success payload is not proof.
+- **Check for duplicates the API cannot see.** `apollo_contacts_find_potential_duplicate` takes one contact id and returns at most one likely duplicate, free. It matches on more than email: on 2026-11-08 it paired a contact created in August with a 2023 record carrying a different address, which no email dedupe would ever catch. Run it on a sample after a large import. If it finds pairs, **show them to the operator and stop**: `apollo_duplicate_contacts_merge` permanently deletes the duplicates (and, with CRM deletion sync on, their Salesforce or HubSpot records), needs the Admin role, and must never run in parallel. Which record survives is the operator's call, not yours.
 
 Pushing enriched people into the account costs no credits: the enrichment already paid for the data.
 
@@ -348,7 +368,7 @@ You end with `final.csv` on your drive: clean, verified, prioritized, ready for 
 - **Enriching before deduping and filtering.** You pay credits for leads you were going to cut.
 - **Building 50,000 leads on an ICP you never sampled.** That is a Targeting failure showing up as a List bill.
 - **Skipping verification.** One bouncy list can take a domain down.
-- **Writing to the Apollo CRM before dedupe.** The bulk-create tools make a new record every time, duplicates included.
+- **Writing to the Apollo CRM before dedupe.** REST bulk create makes a new record every time unless you send `run_dedupe: true`, and MCP bulk create matches on email only. Dedupe the payload yourself.
 - **Flooding on a few big domains.** Cap per-company concentration.
 - **Deduping the list against itself and calling it suppression.** Customers, open deals, and past unsubscribes are not duplicates, and they are the ones that actually cost you something.
 - **Not deduping by person id after paginating.** Apollo's pages overlapped by roughly 9% in a July 2026 run, and later pulls were clean. Dedupe by `id` before the per-company cap either way, or you risk paying for the same person twice.

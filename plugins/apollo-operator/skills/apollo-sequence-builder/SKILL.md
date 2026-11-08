@@ -64,7 +64,7 @@ Run `sequence-reviewer` on the draft. Fix what it flags. Then build it in Apollo
   {"type":"auto_email","wait_time":4,"wait_mode":"day","emailer_touches":[…]}]}
 ```
 
-Leave `subject` **empty on steps 2 and 3** so they reply in-thread rather than starting a new one. `--schedule-id` comes from `apollo sequences schedules`. A sequence created without `--active` lands inactive, which is what you want: create, verify, then activate deliberately.
+Leave `subject` **empty on steps 2 and 3** on the CLI so they reply in-thread rather than starting a new one. **On MCP, `apollo_sequences_create` rejects an empty subject on any step** ("Please make sure your template has a non-empty subject before turning it on", 2026-11-08, on an inactive create), so repeat step 1's subject there instead. `--schedule-id` comes from `apollo sequences schedules`. A sequence created without `--active` lands inactive, which is what you want: create, verify, then activate deliberately.
 
 **Read the saved copy back over the connector.** Discover the action for reading a complete sequence, and inspect every step, subject, and body after creation. A create or search response may omit copy. Do not treat missing content in those responses as proof that the saved sequence is empty.
 
@@ -154,6 +154,26 @@ If you have a CSV with an `opener` or `email_body` column, that column is the in
 - **Approval moves up a level.** Nobody reads 800 individual emails, so review happens at the template and process level, with a spot-check across tiers. That is the same standard this library already applies to AI-assisted copy.
 - **Individual bodies do not rescue a weak offer.** A thousand bespoke emails to a bad list is still a bad campaign, just a more expensive one.
 
+### The direct route: each contact's own copy on the step itself
+
+Since 2026-11-08 the MCP can store a contact's own subject and body on a sequence step, with no custom field in between. Three tools do it:
+
+- **At enrollment:** `apollo_emailer_campaigns_add_contact_ids` takes `step_content_overrides`, one entry per contact, each naming the steps (`emailer_step_id`, from `apollo_emailer_campaigns_show`) and the `subject` and `body_html` that contact gets instead of the shared template. A step you leave out stays on the template. On a manual email step it pre-fills the rep's draft instead of sending.
+- **Read it back:** `apollo_emailer_campaigns_step_content` returns what is stored per contact and step. It is free and read-only. An empty `step_contact_contents` means everyone gets the template (that is what it returned on our live sequence on 2026-11-08).
+- **Change it after enrollment:** `apollo_emailer_campaigns_update_step_content` sets or clears one contact's content on the steps you name and leaves the others alone. It cannot edit a step already sent to that contact, and it reports that step under `not_written`.
+
+**Verified live 2026-11-08** on an inactive test sequence: an enrollment with an override on step 1 reported it under `step_content_overrides_result.written`, `step_content` read it back with `source: "agent"`, an update set step 2 and cleared step 1 in one call, and a second enrollment of the same contact was skipped with `not_written` (the reason given was `contacts_active_in_other_campaigns`, although it was the same sequence). No credits.
+
+Five rules, four of them from Apollo's own descriptions:
+
+- **Overrides only apply to contacts the call actually enrolls.** Anyone already in the sequence is skipped and keeps what they had, so re-sending an enrollment does not update copy. Use `update_step_content` for that.
+- **An enrollment replaces all of that contact's prior overrides for the sequence**, and an update overwrites a step's stored copy. Neither can be undone, so read the current content back first if any of it is worth keeping.
+- **Write the resolved text.** Merge tags are not substituted inside override content, so `{{first_name}}` would arrive as typed. Put the real name in.
+- **Keep it plain text.** The field is `body_html`, but the cold-email rule does not change: wrap lines in `<div>` exactly as the shared template does, no images, links, or styling.
+- **Subjects on steps 2 and 3 still thread.** If you set a subject there, set the same one as step 1 or leave the step on the template, or you break the thread.
+
+**Which route to use.** The custom-field merge keeps one shared template with a single hole in it, so the greeting, CTA, and signature stay identical for everyone and only the middle varies. Step content replaces the whole subject and body per contact, which is more control and more to review. Either way, approval moves up to the template and process level with a spot-check, as above, and nothing is personalized until the list is verified. Read the stored content back before activating, every time.
+
 ### The alternative: Apollo's own AI opener
 
 `emailer_touches` accepts `has_personalized_opener: true`, which has Apollo generate a per-recipient opening line, plus `generation_tone` (Direct, Formal, Casual) and a required `personalized_opener_fallback_option` (`skip`, or `use_generic` with a `generic_personalized_opener`). **It uses credits.**
@@ -166,9 +186,9 @@ Use it when you want personalization without doing the research yourself. Use th
 
 Apollo Operator complements Apollo's own tools. When Apollo's prospecting, enrichment, sequence loading, analytics, or GTM Strategist skill is available and fits the request, offer that skill first. Use its result as the input to the relevant Operator skill. Continue with deliverability, independent verification, list quality, suppression, copy review, and reporting as needed. Do not imply those optional skills are installed without checking.
 
-**Read each action's effect.** Apollo AI actions advertised under `apollo_write` can spend credits or create records. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
+**Read each action's effect.** Apollo AI actions are marked destructive and can spend credits, create records, or overwrite live copy. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
 
-**Read each action's effect.** Apollo AI actions advertised under `apollo_write` can spend credits or create records. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
+**Read each action's effect.** Apollo AI actions are marked destructive and can spend credits, create records, or overwrite live copy. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
 
 ## Editing a live sequence: the diff is destructive
 

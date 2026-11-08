@@ -8,15 +8,14 @@ Be precise about this, because the obvious guess is wrong.
 
 | | Measured |
 |---|---|
-| One MCP v1 tool schema (`apollo_mixed_people_api_search`) | ~19 KB, roughly 5,000 tokens (2026-09-25; it was ~29 KB in July). It is 1 of 85. |
-| MCP v2 full tool list (the router) | 6.0 KB for all four tools, 1.2% of v1's 485 KB (2026-09-25; 5.6 KB against 344 KB, 1.6%, on 2026-09-14) |
+| One MCP tool schema (`apollo_mixed_people_api_search`) | ~20 KB, roughly 5,000 tokens (2026-11-08; it was ~29 KB in July). It is 1 of 96. |
+| The whole MCP tool list | ~526 KB (2026-11-08). The v2 router cut this to 6 KB until it was retired. |
 | CLI help, loaded on demand | `apollo --help` 1.9 KB · `people search --help` 3.0 KB · `sequences create --help` 0.9 KB |
 | **Response payload, same search both lanes** | **Byte-identical.** Same totals, same ids, same obfuscated preview shape. |
 
 So the CLI does **not** return leaner data. Its advantage is two other things:
 
-1. **Schema overhead.** On MCP v1 you pay for every tool definition whether or not you use them, 85 of them as of 2026-09-25. **MCP v2
-   removes almost all of it**, so on v2 the CLI's real advantage is the second point.
+1. **Schema overhead.** On MCP you pay for every tool definition whether or not you use them, 96 of them as of 2026-11-08. The v2 router removed almost all of it while it lasted; with it retired, this advantage is back.
 2. **Results can bypass context entirely.** `> leads.json` means the payload never reaches the
    model. MCP results always pass through context. In a real run, 3,238 people came down as 4 MB
    on disk with nothing in the window. That pull does not fit in a context window over MCP, so
@@ -27,22 +26,16 @@ is exactly the shape of List list work. MCP tool calls do not compose like that.
 `-f csv` is broken on nested responses, so the pipeline ends in `jq`, not in `-f csv`. See
 [CLI recipes](cli-recipes.md).
 
-Measured against v1 twice, eleven days apart:
-
-| | v1 `/mcp` (2026-09-14) | v2 (2026-09-14) | v1 `/mcp` (2026-09-25) | v2 (2026-09-25) |
-|---|---:|---:|---:|---:|
-| Tools listed | 74 | 4 | 85 | 4 |
-| Tool list size | 344 KB | 5.6 KB | 485 KB | 6.0 KB |
-| Same NAICS and headcount-growth search | 7,792 | 7,792 | 7,829 | 7,829 |
-
-The v1 catalog grew by 11 tools in those eleven days and v2 stayed at four, which is the whole argument for the router in one row. Apollo's own count for the catalog is about 100; what one account is served is smaller and depends on plan and rollout.
+| | v1 `/mcp` (2026-09-14) | v1 (2026-09-25) | v1 (2026-11-08) |
+|---|---:|---:|---:|
+| Tools listed (master key) | 74 | 85 | 96 |
+| Tool list size | 344 KB | 485 KB | 526 KB |
 
 Verified live 2026-08-27: the NAICS filter bites on this lane, narrowing the same founder/CEO query
 from 914,768 to 144,734, while writing to disk and costing nothing in context. **No API key needed**,
-the CLI's OAuth token is enough. (The original v1.2 verification used department headcount and
-matched MCP's total exactly at 2,837; that filter has since landed in the CLI.)
+the CLI's OAuth token is enough. (Both filters this lane was first proven with, department headcount in v1.2 and NAICS here, have since landed in the CLI. The lane still matters for the filters listed above.)
 
-**The router runs ahead of its dispatcher, and the dispatcher catches up.** On 2026-09-14 `apollo_find_tools` documented 21 tools in no published list, and v2 refused to dispatch any of them. **By 2026-09-25, 11 of those had been published**: record collections (`apollo_custom_objects_create` / `show`, `apollo_custom_object_records_search`), fields (`apollo_fields_create` / `update`), dynamic AI enrichment (`apollo_dynamic_field_enrichment_enrich` and its `ongoing_enrichment_requests`), data sources (`apollo_data_sources_create`, `apollo_data_source_imports_create`), and CSV exports (`apollo_csv_exports_export_view` / `show`). They are in v1's tool list, in v2's dispatch enums, and in Apollo's public docs, and v2 dispatches them. Record collections still carry a plan gate: on our account the read returns `You don't have access to Sheets` (it said `AI Studio` on 2026-09-14; same lock, new name, still not a plan option or a documented product). No profile or usage call exposes the gate, so the only way to know is to try, and trying a read costs nothing.
+**The catalog moves in both directions.** Between 2026-09-25 and 2026-11-08 it went from 85 to 96 tools, and the churn was larger than the net. Published since: email and phone validation, duplicate finding and merging, per-contact step content, deals, the website-visitor tracker install tools, Context Center product reads, task reads, and the agent tools below. **Gone from the list:** record collections (`apollo_custom_objects_*`, `apollo_custom_object_records_search`), field create and update, dynamic AI enrichment, data sources and imports, CSV exports, domain authentication diagnosis, and domain purchase. Several of those were published as recently as 2026-09-25. **Unlisted is not always unreachable**: `apollo_email_domain_diagnosis_authentication_status` still answered a direct call with a master key on 2026-11-08 although it is no longer listed. Do not build a workflow on an unlisted tool, and do not assume a listed one from last month is still there.
 
 ## Rate limits and usage
 

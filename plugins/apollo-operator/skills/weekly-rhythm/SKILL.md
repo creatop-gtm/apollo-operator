@@ -9,7 +9,7 @@ Read [runtime rules](../operator-context/references/runtime.md) once per convers
 
 Having a dozen skills does not help if you do not run them on a schedule. This is the schedule. What separates a hobbyist from a real operator is not tooling, it is doing the boring cadence every week without fail.
 
-This is a pure playbook: no automation, no reminders on purpose. Put it on your own calendar and run the prescribed skill at the prescribed time.
+This is a playbook for a person: put it on your own calendar and run the prescribed skill at the prescribed time. Some of the checks can also run on a schedule without anyone at the keyboard, and a few must never. Where that line sits is the last section, "Running checks unattended".
 
 ## Put it on your calendar (do this first)
 
@@ -79,3 +79,8 @@ You do not need to check Apollo every day. Daily poking is procrastination dress
 ## Quarterly: go back to the silent majority
 
 Every quarter, sweep everything that finished a sequence more than 60 days ago and give it one new angle. Count the eligible pool from the account, re-verify it, and disclose current costs before acting. See `re-engagement`.
+
+## Running checks unattended
+
+This plugin does not run unattended jobs or store an account-wide API key. If you schedule checks somewhere else, schedule only reads that report (an account audit, campaign numbers, a bounce watch, mailbox health, and credit balances) and have them tell a person what crossed a threshold. Never schedule enrollment, activation, stopping a sequence, anything that spends credits, record writes or merges, copy changes, or Apollo's AI actions. Check each tool's annotation: if it is marked destructive, a person runs it.
+

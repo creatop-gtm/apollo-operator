@@ -1,15 +1,13 @@
 # CLI recipes (verified)
 
 Every command here was run against a live Apollo account (first on CLI **v2.0.0**, re-checked on
-**v2.1.0**) and produced the result described. Where the CLI misbehaves, the workaround is given rather than the ideal.
+**v2.1.0**) and produced the result described. **v2.2.0** (2026-10-28) added flags noted below from its source; sign in again after upgrading or its new commands return `403`. Where the CLI misbehaves, the workaround is given rather than the ideal.
 
 ---
 
 ## Lane 3: REST with the CLI's own token
 
-The `apollo` binary has no flag for NAICS, SIC, founded year, headcount growth, tenure, years of
-experience, market segments, LinkedIn URL lookup, or person-level website visitors. (Department
-headcount was on this list until CLI v2.1.0.) You do not have to fall back to MCP for those. The token `apollo auth login` already stored authenticates against the same endpoint the MCP
+The `apollo` binary has no flag for founded year, tenure, years of experience, market segments, LinkedIn URL lookup, or person-level website visitors. (NAICS, SIC, and headcount growth left this list in CLI v2.2.0 as `--naics`, `--sic`, `--not-naics`, `--not-sic`, and `--headcount-growth` with `--headcount-growth-months`; department headcount left it in v2.1.0.) You do not have to fall back to MCP for the rest. The token `apollo auth login` already stored authenticates against the same endpoint the MCP
 uses, so you get the **full filter surface with disk output and no API key**.
 
 ```bash

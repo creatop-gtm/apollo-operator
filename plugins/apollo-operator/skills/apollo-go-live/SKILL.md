@@ -37,6 +37,7 @@ Enroll into the sequence while it is still inactive, so contacts queue but no em
 - **Leave `sequence_unverified_email: false`** (the default). This makes Apollo refuse unverified addresses, which enforces the verify-everything rule at the door. Do not flip it to true to "get more in."
 - **Check the opt-out before the first enrollment.** Confirm the workspace unsubscribe link is on (a UI setting, not exposed through the API) and that the signature carries a physical address. See `compliance.md`.
 - Only contacts can be enrolled. If your people are search results but not yet contacts, enrich and create them first (List), then enroll.
+- **Per-contact copy goes in at this call, or not at all from here.** If each contact has their own subject and body, pass them as `step_content_overrides` now: they apply only to contacts this call enrolls, and a later re-enrollment skips anyone already in. To change one afterwards, use `apollo_emailer_campaigns_update_step_content`. Read them back with `apollo_emailer_campaigns_step_content` before activating. See `apollo-sequence-builder`.
 - **Verify enrollment.** Each enrolled contact comes back with the sequence id in its `emailer_campaign_ids`. A removal (step 6) sets it back to empty. Confirm rather than trusting the call.
 
 ### 4. Human review (surface, then wait)
@@ -87,9 +88,9 @@ Three fields change what activation actually does:
 
 ## Enrollment fails silently. Check the response body, never the exit code.
 
-**Verified 2026-08-31, and it cost a false "done" in a real session.**
+**Seen 2026-08-31, and it cost a false "done" in a real session.**
 
-`apollo sequences add-contacts --contact-id <ids...>` is documented as variadic, but the CLI **joins the ids into a single string**. Apollo then looks up one contact whose id is `"id1 id2 id3 id4 id5"`, finds nothing, and returns **HTTP 200 with exit code 0**:
+Five ids were passed as `apollo sequences add-contacts --contact-id $IDS` in **zsh**, which does not split an unquoted variable into words the way bash does. So the CLI received one argument, `"id1 id2 id3 id4 id5"`, and Apollo looked up one contact by that id, found nothing, and returned **HTTP 200 with exit code 0**. (This library first blamed the CLI for joining the ids. That was wrong: the CLI sends `--contact-id` values as a proper array. The shell joined them.)
 
 ```json
 {"contacts": [],
@@ -101,7 +102,7 @@ Nobody is enrolled, nothing warns you, and the shell says success. The failure o
 **Two rules, both mandatory:**
 
 - **Assert on the response body after every enrollment.** `contacts` must have the length you expect and `skipped_contact_ids` must be empty. Treat a non-empty `skipped_contact_ids` as a failure even on a 200. The skip reasons are informative (`contact_not_found`, and others for suppression and ownership rules), so print them.
-- **Enroll more than one contact over REST, not the CLI.** `POST /emailer_campaigns/{id}/add_contact_ids` with a proper `contact_ids` array works correctly. Single-contact CLI enrollment is fine because there is nothing to join.
+- **Pass ids as separate words.** On the CLI, write them out (`--contact-id id1 id2 id3`), or in zsh expand the variable with `${=IDS}`. Over REST, send `contact_ids` as a JSON array to `POST /emailer_campaigns/{id}/add_contact_ids`. Any of the three works; an unquoted `$IDS` under zsh does not.
 
 **Enrolling does not send while the sequence is inactive.** Enroll first, verify the count, then activate as a separate deliberate step. That ordering gives you a real checkpoint between "the right people are in" and "email is going out."
 

@@ -27,7 +27,7 @@ Built by Creatop, a B2B outbound agency. Our full point of view is in `reference
 
 This library is **MCP-native**: everything below and in every other skill assumes Apollo shows up as typed `apollo_*` tools inside the model. That is the default and the right substrate for guardrailed, human-gated work. But there are four routes to the same API, and the choice decides how much context you burn and whether a job is possible at all:
 
-1. **MCP**: typed tools inside the model. Results always pass through context. **Prefer v2** (`https://mcp.apollo.io/mcp-v2`), which is a four-tool router rather than the full catalog (85 tools and about 485 KB on 2026-09-25, growing weekly): about 1% of the schema preload, the same filter surface, and discovery built in.
+1. **MCP** (`https://mcp.apollo.io/mcp`): typed tools inside the model. Results always pass through context, and so does every tool schema: 96 tools and about 526 KB on 2026-11-08, growing most weeks. Apollo retired the v2 router that used to cut that preload: `/mcp-v2` returns 404 as of 2026-11-08 and Apollo's docs list only `/mcp`. So keep bulk work off this lane.
 2. **CLI binary** (`apollo auth login`): common filters, output to disk, composable and scriptable.
 3. **REST with the CLI's own token**: the **full MCP filter surface** with disk output, and no API key needed. The right lane for bulk work that needs advanced filters.
 4. **REST with an API key**: a route for separate service integrations. Unattended execution and master-key setup are outside this plugin.
@@ -38,11 +38,11 @@ The rule everything collapses to: **search wide off-context, act narrow on MCP.*
 
 Do not guess which tool to call. This is the surface the MCP can act on directly. Tool names are the Apollo MCP tools (`apollo_*`).
 
-**On v2, this map is a convenience and `apollo_find_tools` is the authority.** The map is here so you can plan a motion without a round trip, and because it carries cost and trap notes no schema exposes. It is hand-maintained, and Apollo ships faster than it: if the two disagree, believe `find_tools`. Call it whenever a tool you need is not listed here, whenever a call fails on a name, and before telling an operator that Apollo cannot do something.
+**This map is a convenience, and the tools your connection actually lists are the authority.** The map is here so you can plan a motion without a round trip, and because it carries cost and trap notes no schema exposes. It is hand-maintained, and Apollo ships faster than it: if the two disagree, believe the live list. Check it whenever a tool you need is not listed here, whenever a call fails on a name, and before telling an operator that Apollo cannot do something.
 
-**The dispatcher `find_tools` returns is a cost signal, and it is free.** Apollo's read / write / destructive split follows credits rather than verbs, so `apollo_mixed_people_api_search` is a read while `apollo_people_match` and `apollo_organizations_enrich` are destructive. The rule that follows: **anything dispatched through `apollo_write_destructive` either spends credits or changes live state, so quote the cost and get the operator before running it** (prime directive 7). This is maintained by Apollo rather than by us, so unlike the map below it does not go stale.
+**Every tool carries Apollo's own safety hints, and they are a cost signal.** Each tool's annotations mark it `readOnlyHint` or `destructiveHint`, and the split follows credits rather than verbs: `apollo_mixed_people_api_search` and `apollo_organizations_lookup` are read-only because they are free, while `apollo_people_match`, `apollo_mixed_companies_search`, and `apollo_email_validation_validate` are destructive because they spend `lead_credit` (38 read-only and 45 destructive of 96 on 2026-11-08). The rule that follows: **anything marked destructive either spends credits or changes live state, so quote the cost and get the operator before running it** (prime directive 7). Apollo maintains these hints, so unlike the map below they do not go stale. Many tool descriptions also carry a mandatory confirmation sentence and an `mcp_credits` block on the result: say the sentence as written, and report the credits spent unprompted.
 
-**Read each action's effect.** Apollo AI actions advertised under `apollo_write` can spend credits or create records. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
+**Read each action's effect.** Apollo AI actions are marked destructive and can spend credits, create records, or overwrite live copy. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
 
 **Targeting and search**
 - `apollo_mixed_people_api_search`: find people by title, seniority, department, location, headcount, keywords. Primary prospecting call.
@@ -52,7 +52,8 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 
 **Enrichment**
 - `apollo_people_match` / `apollo_people_bulk_match`: enrich a person (email, phone, verified data). Also carries `reveal_phone_number`, `run_waterfall_email`, and `run_waterfall_phone`, all **asynchronous**: they return a `request_id` and you poll `apollo_webhook_result_show`. Waterfall costs vary by plan and provider, so never quote a fixed number.
-- `apollo_webhook_result_show`: collects async results. **Confirm it exists before starting any reveal or waterfall**, or you spend credits on a result you cannot fetch.
+- `apollo_webhook_result_show`: collects async results. **Confirm it exists before starting any reveal, waterfall, or validation**, or you spend credits on a result you cannot fetch.
+- `apollo_email_validation_validate` / `apollo_phone_validation_validate`: Apollo's own deliverability check on addresses or numbers you already have, up to 10 per call, asynchronous like the waterfall. **Up to 1 lead credit per address**, sometimes 0, and a repeat check inside the cache window is still charged. A `not_validated` verdict is not a bad address: it also covers catch-all domains and checks with no verdict. Where it fits beside an independent verifier: `apollo-list-builder` step 7.
 - `apollo_organizations_enrich` / `apollo_organizations_bulk_enrich`: enrich a company. **1 lead credit per company** (measured 2026-09-14), and the only way to read funding stage and date, since person enrichment does not carry them.
 - `apollo_organizations_lookup`: **free** organization discovery (fuzzy name lookup, shallow records). Prefer it over the paid company search when you only need to resolve an id.
 - `apollo_organizations_job_postings`: a company's open roles (a hiring signal). 1 credit per call.
@@ -64,14 +65,17 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 - Maps closely onto `brief.md`, see `business-brief`.
 
 **CRM (contacts and accounts)**
-- `apollo_contacts_create` / `bulk_create` / `update`: add or update people. **`bulk_create` does not deduplicate or update on a match, whatever its description says** (verified 2026-08-31), and it ignores `label_names`. Dedupe the payload first and attach lists separately. Single `create` does match on email, and overwrites the existing record's fields when it does (verified 2026-09-14).
+- `apollo_contacts_create` / `bulk_create` / `update`: add or update people. **MCP `bulk_create` matches on email and returns the existing record, but does not update it, whatever its description says** (verified 2026-09-29). Over REST, `POST /contacts/bulk_create` creates a new record every call unless you send `run_dedupe: true`. Both ignore `label_names`. Dedupe the payload first and attach lists separately. Single `create` does match on email, and overwrites the existing record's fields when it does (verified 2026-09-14).
+- `apollo_contacts_find_potential_duplicate`: read-only. One contact id in, at most one likely duplicate out. **It matches on more than email**: on 2026-11-08 it paired a contact with a 2023 record carrying a different address. Checking 500 contacts is 500 calls.
+- `apollo_duplicate_contacts_merge` / `apollo_duplicate_contacts_merge_job`: merge groups into a surviving contact the operator chooses. **Merging permanently deletes the duplicates**, and with CRM deletion sync on it deletes them in Salesforce or HubSpot too. Admins only, never in parallel, and only after the operator has seen every group.
 - `apollo_accounts_create` / `bulk_create` / `update`: add or update companies. `apollo_accounts_bulk_create` takes `run_dedupe: true` to skip companies that already exist; it is off by default.
 
 **Sequences and sending**
 - `apollo_sequences_create` / `update`: build or edit a sequence (steps and cadence). **`update` is declarative**: every step, touch, and template id you omit is deleted. It also takes `active`, so it can stop a live sequence.
 - `apollo_emailer_campaigns_search`: find existing sequences.
 - `apollo_emailer_campaigns_show`: read one sequence in full, every step, subject, and body. Call it before any `update`.
-- `apollo_emailer_campaigns_add_contact_ids`: enroll contacts.
+- `apollo_emailer_campaigns_add_contact_ids`: enroll contacts. Takes `step_content_overrides` to give each contact their own subject and body on chosen steps, applied only to contacts the call actually enrolls.
+- `apollo_emailer_campaigns_step_content` / `update_step_content`: read, then change or clear, one enrolled contact's own step copy without re-enrolling them. A step already sent cannot be edited. See `apollo-sequence-builder`.
 - `apollo_emailer_campaigns_remove_or_stop_contact_ids`: pull contacts out (on any reply or bounce).
 - `apollo_emailer_campaigns_approve`: approve a sequence to start sending.
 - `apollo_emailer_messages_create` / `send_now` / `email_send_status`: draft, send, and check individual emails.
@@ -81,7 +85,7 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 - `apollo_emailer_campaigns_activity_feed`: one contact's enrollment timeline (enrolled, paused, replied, finished).
 
 **Tasks and follow-through**
-- `apollo_tasks_create` / `bulk_create` / `search` / `complete` / `skip` / `update`: manual steps (calls, LinkedIn, manual email) inside a sequence.
+- `apollo_tasks_create` / `bulk_create` / `search` / `show` / `complete` / `skip` / `update`: manual steps (calls, LinkedIn, manual email) inside a sequence.
 
 **Mailboxes and deliverability**
 - `apollo_email_accounts_index`: OAuth-connected sending mailboxes and their state, with the `default` sender flag (see Infrastructure).
@@ -96,6 +100,9 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 - `apollo_users_search`: teammates and their user ids, for task and owner assignments.
 - `apollo_feedback_log`: Apollo's in-band channel for reporting a tool that returned something wrong or empty. Use it when a result contradicts the tool's own description.
 
+**Website visitors**
+- `apollo_website_visitor_domain_tracker_index` / `install_script` / `add_domain` / `edit_domain` / `delete_domain` / `send_install_email`: the tracking script and the domains it covers. `install_script` returns the ready snippet with the team's id filled in and the placement rules, so never assemble it by hand. See `apollo-signals`.
+
 **Lists**
 - `apollo_labels_index` / `apollo_labels_create` / `apollo_labels_update`: see, create, and rename lists.
 - `apollo_labels_add_entity_ids_to_label_names` / `apollo_labels_remove_entity_ids_from_label_names`: put records into or take them out of a list by name. Adding creates the list if it does not exist.
@@ -108,19 +115,19 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 
 **Not automated by the MCP** (guide the human in Apollo's UI, do not promise automation): dialer and cold calling (calls can be logged, not placed), meetings and calendar, booking page, meeting recorder, Workflow CRUD, and Apollo's in-app "Research with AI." For research, this operator does it natively by default: the assistant reads websites and drafts hooks itself, or calls model APIs where keys exist. Apollo's own discovered AI actions can be offered under the operator-choice and approval rule in the next section.
 
-**Deliberately out of scope: CRM pipeline management.** Apollo's API also covers deals and opportunities, contact / account / opportunity stages, and bulk owner and stage updates, roughly a dozen endpoints. This library stops at the reply. Moving a reply into a pipeline, forecasting it, and managing who owns it is CRM work, and doing it badly from an outbound skill is worse than not doing it. This is a boundary we chose, not a gap we missed.
+**Deliberately out of scope: CRM pipeline management.** Apollo's API also covers deals and opportunities, contact / account / opportunity stages, and bulk owner and stage updates, roughly a dozen endpoints, and the MCP now carries deals too (`apollo_deals_create` / `search` / `show`, listed 2026-11-08). This library stops at the reply. Moving a reply into a pipeline, forecasting it, and managing who owns it is CRM work, and doing it badly from an outbound skill is worse than not doing it. This is a boundary we chose, not a gap we missed.
 
 **This list moves.** Apollo shipped 30+ MCP launches in the twelve weeks to July 2026, and capabilities that were UI-only have become tool calls (mailbox purchasing and website-visitor filtering both moved during v1.2). **Check the live tool surface before telling anyone Apollo "cannot" do something.** A confident "not supported" is the fastest way for this library to be wrong.
 
-**On MCP v2 the same tools sit behind a router**: `apollo_find_tools`, `apollo_read`, `apollo_write`, and `apollo_write_destructive`. Look an action up with `apollo_find_tools` and use the name and dispatcher it returns rather than guessing. See `apollo-operator`.
+**Read each action's effect.** Apollo AI actions are marked destructive and can spend credits, create records, or overwrite live copy. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
 
-**The MCP and the REST API are not subsets of each other**, which is the trap. Mailbox purchasing and the Context Center are MCP-only. Deals, rate-limit stats, saved-account search, and email open and click stats are REST-only. Record collections, dynamic AI enrichment, data sources, and CSV exports were router-only on 2026-09-14 and **published and dispatchable on v2 by 2026-09-25**; record collections still need a plan gate Apollo currently calls "Sheets" (it said "AI Studio" eleven days earlier), which no plan offers and no profile call exposes. Check both before concluding something is impossible. See `apollo-operator`.
+**The MCP and the REST API are not subsets of each other**, which is the trap. Mailbox purchasing and the Context Center are MCP-only. Rate-limit stats, saved-account search, and email open and click stats are REST-only. Check both before concluding something is impossible. See `apollo-operator`.
 
 ## Apollo's skills and this toolkit
 
 Apollo Operator complements Apollo's own tools. When Apollo's prospecting, enrichment, sequence loading, analytics, or GTM Strategist skill is available and fits the request, offer that skill first. Use its result as the input to the relevant Operator skill. Continue with deliverability, independent verification, list quality, suppression, copy review, and reporting as needed. Do not imply those optional skills are installed without checking.
 
-**Read each action's effect.** Apollo AI actions advertised under `apollo_write` can spend credits or create records. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
+**Read each action's effect.** Apollo AI actions are marked destructive and can spend credits, create records, or overwrite live copy. Name a relevant discovered action, establish cost and balance, and wait for the operator's explicit approval before dispatch.
 
 ## Tool reference (the toolkit around Apollo)
 
@@ -230,6 +237,7 @@ Identify the request and route.
 | Enrolling the list, going live, pulling contacts, stopping a live send | **Launch** | `apollo-go-live` |
 | Going back to leads who finished a sequence and never replied | **Iterate** | `re-engagement` |
 | Results by sequence, step, variant, and mailbox, plus meetings booked | **Iterate** | `campaign-reporting` |
+| Running checks on a schedule with no one watching, what is safe to automate | **Iterate** | `weekly-rhythm`, "Running checks unattended" |
 | Is it working, experiments, scaling a winner, ongoing ops | **Iterate** | `positive-reply-scoring`, `experiment-design`, `weekly-rhythm` |
 | A reason to reach out now (buying signals, timing) | **Signals** (cross-cutting) | `apollo-signals` |
 | How Apollo works or where a setting lives | Apollo's own documentation or a discovered `apollo_agent_explain_howto` action, with effect, cost, and approval checked before dispatch | Use the knowledge base map when the action is unavailable. For CLI commands, read Apollo's CLI reference linked from `apollo-operator`. |
