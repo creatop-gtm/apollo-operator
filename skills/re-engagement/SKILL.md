@@ -45,7 +45,7 @@ Turning that flag on **is the whole decision.** It is off for a reason, so turn 
 
 ### 2. Re-verify before you spend or send
 
-Data decays, and it decays fastest in exactly the fields you need. Over 60 to 90 days expect people to have changed jobs and addresses to have gone dead. Run the list through your verification service again (List, step 7) and drop anything that is no longer deliverable. Cheaper than a bounce spike, by a wide margin.
+Data decays, and it decays fastest in exactly the fields you need. Over 60 to 90 days expect people to have changed jobs and addresses to have gone dead. Run the list through your verification service again (List, step 7) and drop anything that is no longer deliverable. For a small segment, Apollo's own `apollo_email_validation_validate` is a convenient spot-check at up to 1 lead credit per address; for anything larger the dedicated service is cheaper. Cheaper than a bounce spike, by a wide margin.
 
 **Job changes are an opportunity, not just decay.** Someone who moved to a new company is a *new* prospect with a warm prior touch, and a new-in-role person has budget and a mandate to change things. Apollo's `sequence_job_change` flag and the job-change signal (Signals) both surface this. Route them into a fresh angle rather than the re-engagement sequence.
 

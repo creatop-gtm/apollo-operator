@@ -71,7 +71,7 @@ Use `apollo_emailer_schedules_index` to pick or confirm a schedule that sends on
 
 ## Monitoring
 
-Watch bounce rate and mailbox reputation continuously. Apollo's Data Health Center and inbox-placement tooling live in the UI (see `../operator-context/references/apollo-kb-map.md`); point the operator there for the deeper checks the MCP does not expose. If anything looks off, stop optimizing copy and fix deliverability first. You cannot out-write a reputation problem.
+Watch bounce rate and mailbox reputation continuously. Apollo's Data Health Center and inbox-placement tooling live in the UI (see `../operator-context/references/apollo-kb-map.md`); point the operator there for the deeper checks the MCP does not expose. Apollo's agent can also run a diagnosis through `apollo_agent_fix_email_deliverability` (bounce and spam analysis, authentication, sending limits, emails that were not sent): offer it as an option when something looks wrong, and keep the firm rules above as the floor, whatever it recommends. If anything looks off, stop optimizing copy and fix deliverability first. You cannot out-write a reputation problem.
 
 ## Common mistakes
 

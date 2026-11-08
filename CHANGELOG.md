@@ -5,8 +5,50 @@ All notable changes to Apollo Operator are documented here. This project uses
 
 ## Unreleased
 
+**Kept current with Apollo's MCP and CLI as of 2026-11-08.** Apollo now serves one MCP endpoint, has
+published several new tools, and CLI v2.2.0 added many of the advanced search filters. Same 20 skills.
+
+### Kept current
+
+- **One MCP endpoint.** `https://mcp.apollo.io/mcp-v2` no longer responds and Apollo's MCP docs list
+  only `https://mcp.apollo.io/mcp`, so every skill and the Claude Code install prompt now point at
+  `/mcp`. The cost rule that used the router's dispatchers now reads each tool's `readOnlyHint` and
+  `destructiveHint` annotations, which follow the same split: free reads, and calls that spend
+  credits or change live state.
+- **Tool map refreshed** against the live list (96 tools). Tools no longer listed, including record
+  collections, CSV exports, and domain purchase, are no longer recommended.
+- **Apollo's AI agent** is reachable on the ordinary connector, with twelve agent tools and a
+  dedicated `apollo_agent_poll_task`. The library offers the new ones where they fit:
+  `bulk_enrich` in List, `research_and_analyze` in Targeting, `optimize_sequences` in Message,
+  `analyze_performance` in Iterate, and `fix_email_deliverability` in Infrastructure, each with the
+  operator's yes.
+- **CLI v2.2.0.** NAICS, SIC, headcount growth, and lookalike filters now have CLI flags, so the list
+  of filters that need lane 3 is shorter. After upgrading, run `apollo auth login` again so the new
+  commands get their scopes.
+
+### New in the library
+
+- **Email and phone validation** (`apollo_email_validation_validate`). The list builder says where it
+  fits beside an independent verifier: convenient for small sets inside a conversation, at up to one
+  lead credit per address.
+- **Duplicate checks** (`apollo_contacts_find_potential_duplicate`) after imports and in the account
+  audit. It matches on more than email. Merging deletes records, so the library shows pairs to the
+  operator and never merges on its own.
+- **Per-contact step copy** (`step_content_overrides` at enrollment, plus `step_content` and
+  `update_step_content`), a direct route to individual emails without a custom field.
+- **Website tracker install script** in the account audit and Signals.
+
+### Fixed
+
+- **Enrollment note in Launch.** The silent enrollment failure came from zsh passing several ids as
+  one argument, not from the CLI. The fix is now stated: separate words, `${=IDS}`, or an array over
+  REST.
+- **Bulk contact create.** MCP matches on email and returns the existing record without updating it.
+  REST creates a new record on every call unless `run_dedupe: true` is sent.
 - **README and marketplace descriptions** now say the skills run in Claude Code, Codex, and any AI
   chat, not Claude Code only.
+
+The Codex plugin in `plugins/apollo-operator/` is rebuilt from these files at the next release.
 
 ## v1.4.2 (2026-09-29)
 

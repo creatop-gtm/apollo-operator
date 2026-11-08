@@ -152,6 +152,23 @@ If you have a CSV with an `opener` or `email_body` column, that column is the in
 - **Approval moves up a level.** Nobody reads 800 individual emails, so review happens at the template and process level, with a spot-check across tiers. That is the same standard this library already applies to AI-assisted copy.
 - **Individual bodies do not rescue a weak offer.** A thousand bespoke emails to a bad list is still a bad campaign, just a more expensive one.
 
+### The direct route: each contact's own copy on the step itself
+
+Since 2026-11-08 the MCP can store a contact's own subject and body on a sequence step, with no custom field in between. Three tools do it:
+
+- **At enrollment:** `apollo_emailer_campaigns_add_contact_ids` takes `step_content_overrides`, one entry per contact, each naming the steps (`emailer_step_id`, from `apollo_emailer_campaigns_show`) and the `subject` and `body_html` that contact gets instead of the shared template. A step you leave out stays on the template. On a manual email step it pre-fills the rep's draft instead of sending.
+- **Read it back:** `apollo_emailer_campaigns_step_content` returns what is stored per contact and step. It is free and read-only. An empty `step_contact_contents` means everyone gets the template (that is what it returned on our live sequence on 2026-11-08).
+- **Change it after enrollment:** `apollo_emailer_campaigns_update_step_content` sets or clears one contact's content on the steps you name and leaves the others alone. It cannot edit a step already sent to that contact, and it reports that step under `not_written`.
+
+Four rules, three of them from Apollo's own descriptions:
+
+- **Overrides only apply to contacts the call actually enrolls.** Anyone already in the sequence is skipped and keeps what they had, so re-sending an enrollment does not update copy. Use `update_step_content` for that.
+- **An enrollment replaces all of that contact's prior overrides for the sequence**, and an update overwrites a step's stored copy. Neither can be undone, so read the current content back first if any of it is worth keeping.
+- **Keep it plain text.** The field is `body_html`, but the cold-email rule does not change: wrap lines in `<div>` exactly as the shared template does, no images, links, or styling.
+- **Subjects on steps 2 and 3 still thread.** If you set a subject there, set the same one as step 1 or leave the step on the template, or you break the thread.
+
+**Which route to use.** The custom-field merge keeps one shared template with a single hole in it, so the greeting, CTA, and signature stay identical for everyone and only the middle varies. Step content replaces the whole subject and body per contact, which is more control and more to review. Either way, approval moves up to the template and process level with a spot-check, as above, and nothing is personalized until the list is verified. We have built this from Apollo's tool descriptions and read it back live; the write path has not yet been run end to end here.
+
 ### The alternative: Apollo's own AI opener
 
 `emailer_touches` accepts `has_personalized_opener: true`, which has Apollo generate a per-recipient opening line, plus `generation_tone` (Direct, Formal, Casual) and a required `personalized_opener_fallback_option` (`skip`, or `use_generic` with a `generic_personalized_opener`). **It uses credits.**
@@ -162,7 +179,7 @@ Use it when you want personalization without doing the research yourself. Use th
 
 ### Apollo's agent can draft the whole sequence. Offer it.
 
-`apollo_agent_draft_sequence_copy` is Apollo's own drafting, review, and optimisation of sequence copy, grounded in the Context Center. It overlaps this skill directly, so say the option out loud rather than writing by hand as if it did not exist: an operator with a filled Context Center who wants a first draft fast may prefer it, and that is their call. Reachability, as of 2026-09-16: it runs only on the v1 MCP with a master API key, not through the v2 dispatcher and not in the Claude Code connector, so check `apollo_find_tools` first.
+`apollo_agent_draft_sequence_copy` is Apollo's own drafting, review, and optimisation of sequence copy, grounded in the Context Center. It overlaps this skill directly, so say the option out loud rather than writing by hand as if it did not exist: an operator with a filled Context Center who wants a first draft fast may prefer it, and that is their call. It is reachable on the ordinary connector since 2026-11-08, and so is `apollo_agent_optimize_sequences`, which diagnoses a live sequence and rewrites its copy once approved. Treat an optimisation as an experiment, not a fix: run it through `experiment-design` so one change is measured at a time.
 
 Whatever it produces is a draft, not an approved sequence. It goes through `sequence-reviewer` like any other copy, the word bands and the step 3 rule still apply, and a human still approves before activation. Apollo's copy knows the product; it does not know the deliverability history of the mailboxes it will send from. Stance: `operator-context`.
 

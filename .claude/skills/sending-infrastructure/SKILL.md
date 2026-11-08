@@ -98,7 +98,7 @@ Real money, real provisioning, and irreversible from the tool. Treat it with the
 3. **Say the confirmation exactly as the tool requires**, with real numbers: "Purchasing [N] [type] mailbox(es) will consume [N × cost] credits. Do you want to proceed?" Do not paraphrase it, and do not proceed without an explicit yes.
 4. Provisioning is asynchronous. New mailboxes start `pending_setup` and become `active`. Poll `apollo_email_account_purchase_index`.
 
-**Setting DNS is still manual**, so Steps 3 to 5 do not go away. **Buying domains is changing:** Apollo's MCP router documents `apollo_domain_purchase_create`, at **1,500 unified credits per domain**, with a full WHOIS registrant required and no undo. It is not in the published tool list and has not been tested here, so treat it as coming rather than available, and compare the credit cost against a registrar before choosing it.
+**Setting DNS is still manual**, so Steps 3 to 5 do not go away. **Buying domains is not available on the MCP.** In September Apollo's router documented `apollo_domain_purchase_create`, at 1,500 unified credits per domain, with a full WHOIS registrant required and no undo. It never reached the published list and is not documented anywhere on 2026-11-08, so buy domains at a registrar.
 
 **Do the arithmetic before you suggest this.** Three google mailboxes is 2,400 credits, which on a 4,000-credit plan is most of a month's enrichment budget. Buying mailboxes and enriching a list compete for the same pool, and an operator who does not realise that will run out mid-campaign. Apply the 85% rule from `apollo-list-builder`.
 
@@ -119,7 +119,7 @@ Four limits decide how far to trust it, all verified 2026-09-14:
 - **It only sees domains with a mailbox connected to Apollo.** On an account whose cold mailboxes live in another sending platform, it reported one domain, the team's primary, and none of the sending domains. It is not a general DNS checker.
 - **It reports the last stored check, not a fresh one.** The one domain returned had last been checked almost eight weeks earlier. Read `authentication_status_updated_at` before trusting a verdict, and re-check DNS directly after any change.
 - **At most 10 domains per call**, issue-first. Never conclude that every domain is healthy from one response; pass `domain` to check a specific one.
-- **It is not in the published tool list.** It surfaced through the MCP v2 router and runs only when called directly on the v1 MCP with a master API key (see `apollo-operator`).
+- **It is not in the published tool list.** It surfaced through the retired v2 router, and on 2026-11-08 it still answered a direct call on `/mcp` with a master API key while appearing in no list. Use it as a convenience if it answers, never as the check a launch depends on (see `apollo-operator`).
 
 It covers authentication only: no blacklists and no inbox placement. If your mailboxes live outside Apollo, the checks live at your DNS host and in the checklist in the references file.
 
