@@ -243,6 +243,7 @@ Identify the request and route.
 | Enrolling the list, going live, pulling contacts, stopping a live send | **Launch** | `apollo-go-live` |
 | Going back to leads who finished a sequence and never replied | **Iterate** | `re-engagement` |
 | Results by sequence, step, variant, and mailbox, plus meetings booked | **Iterate** | `campaign-reporting` |
+| Running checks on a schedule with no one watching, what is safe to automate | **Iterate** | `weekly-rhythm`, "Running checks unattended" |
 | Is it working, experiments, scaling a winner, ongoing ops | **Iterate** | `positive-reply-scoring`, `experiment-design`, `weekly-rhythm` |
 | A reason to reach out now (buying signals, timing) | **Signals** (cross-cutting) | `apollo-signals` |
 | How Apollo's own product works, where a setting lives, a walkthrough of a UI feature | **Apollo's knowledge, not ours** | `apollo_agent_explain_howto` where reachable; otherwise send them to the `knowledge base map`. For CLI commands, Apollo's own CLI skill (see `apollo-operator`). This library never re-explains Apollo's UI. |

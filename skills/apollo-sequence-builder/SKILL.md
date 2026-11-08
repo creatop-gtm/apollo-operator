@@ -62,7 +62,7 @@ Run `sequence-reviewer` on the draft. Fix what it flags. Then build it in Apollo
   {"type":"auto_email","wait_time":4,"wait_mode":"day","emailer_touches":[…]}]}
 ```
 
-Leave `subject` **empty on steps 2 and 3** so they reply in-thread rather than starting a new one. `--schedule-id` comes from `apollo sequences schedules`. A sequence created without `--active` lands inactive, which is what you want: create, verify, then activate deliberately.
+Leave `subject` **empty on steps 2 and 3** on the CLI so they reply in-thread rather than starting a new one. **On MCP, `apollo_sequences_create` rejects an empty subject on any step** ("Please make sure your template has a non-empty subject before turning it on", 2026-11-08, on an inactive create), so repeat step 1's subject there instead. `--schedule-id` comes from `apollo sequences schedules`. A sequence created without `--active` lands inactive, which is what you want: create, verify, then activate deliberately.
 
 **You can read the copy back now, but not on every lane.** `apollo_emailer_campaigns_show` (MCP) returns every step, touch, subject, and body, and `GET /emailer_campaigns/{id}` returns the same with a master API key, both verified 2026-09-14. The CLI lanes still cannot: the create response, `apollo sequences search`, and the MCP campaign search all report `touches: 0` on every step, and `GET /emailer_campaigns/{id}` returns **403** on the CLI's OAuth token. So after a CLI create, read the sequence back over MCP before anything else.
 
@@ -160,14 +160,17 @@ Since 2026-11-08 the MCP can store a contact's own subject and body on a sequenc
 - **Read it back:** `apollo_emailer_campaigns_step_content` returns what is stored per contact and step. It is free and read-only. An empty `step_contact_contents` means everyone gets the template (that is what it returned on our live sequence on 2026-11-08).
 - **Change it after enrollment:** `apollo_emailer_campaigns_update_step_content` sets or clears one contact's content on the steps you name and leaves the others alone. It cannot edit a step already sent to that contact, and it reports that step under `not_written`.
 
-Four rules, three of them from Apollo's own descriptions:
+**Verified live 2026-11-08** on an inactive test sequence: an enrollment with an override on step 1 reported it under `step_content_overrides_result.written`, `step_content` read it back with `source: "agent"`, an update set step 2 and cleared step 1 in one call, and a second enrollment of the same contact was skipped with `not_written` (the reason given was `contacts_active_in_other_campaigns`, although it was the same sequence). No credits.
+
+Five rules, four of them from Apollo's own descriptions:
 
 - **Overrides only apply to contacts the call actually enrolls.** Anyone already in the sequence is skipped and keeps what they had, so re-sending an enrollment does not update copy. Use `update_step_content` for that.
 - **An enrollment replaces all of that contact's prior overrides for the sequence**, and an update overwrites a step's stored copy. Neither can be undone, so read the current content back first if any of it is worth keeping.
+- **Write the resolved text.** Merge tags are not substituted inside override content, so `{{first_name}}` would arrive as typed. Put the real name in.
 - **Keep it plain text.** The field is `body_html`, but the cold-email rule does not change: wrap lines in `<div>` exactly as the shared template does, no images, links, or styling.
 - **Subjects on steps 2 and 3 still thread.** If you set a subject there, set the same one as step 1 or leave the step on the template, or you break the thread.
 
-**Which route to use.** The custom-field merge keeps one shared template with a single hole in it, so the greeting, CTA, and signature stay identical for everyone and only the middle varies. Step content replaces the whole subject and body per contact, which is more control and more to review. Either way, approval moves up to the template and process level with a spot-check, as above, and nothing is personalized until the list is verified. We have built this from Apollo's tool descriptions and read it back live; the write path has not yet been run end to end here.
+**Which route to use.** The custom-field merge keeps one shared template with a single hole in it, so the greeting, CTA, and signature stay identical for everyone and only the middle varies. Step content replaces the whole subject and body per contact, which is more control and more to review. Either way, approval moves up to the template and process level with a spot-check, as above, and nothing is personalized until the list is verified. Read the stored content back before activating, every time.
 
 ### The alternative: Apollo's own AI opener
 

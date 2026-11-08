@@ -279,7 +279,18 @@ So "narrow to verified at search time" (step 1) and "verify independently" (this
 - **It runs 10 addresses per call, asynchronously**, through `apollo_webhook_result_show`. The tool asks you to say an exact confirmation sentence with the count before running it.
 - **`not_validated` is not "invalid".** It also covers catch-all domains and checks that reached no verdict, so it does not separate the three buckets below.
 
-So use it where it is the convenient tool: a handful of addresses inside a conversation, an account-based list of 30 named people, a spot-check before re-engaging a small segment. For a full list, the dedicated service below stays the deciding vote, on cost and because it sorts catch-alls and unknowns apart. We have not yet measured Apollo's check against an independent verifier on the same addresses; until we have, treat it as a useful first pass rather than a replacement.
+**Measured against an independent verifier, 2026-11-08.** Ten addresses an independent verifier had already graded, run through Apollo's check (the vendor that answered was LeadMagic). It cost **9 lead credits for 10 addresses**.
+
+| Independent verifier said | Count | Apollo said |
+|---|---:|---|
+| Safe to send | 4 | validated, all four |
+| Invalid (bounce) | 2 | not validated, both |
+| Risky (catch-all) | 3 | **validated, all three** |
+| Unknown (unreachable) | 1 | **validated** |
+
+They agree on the clear cases. They part on exactly the addresses this step exists for: **Apollo's check returned `validated` for every catch-all and the unreachable one.** Its vendor may resolve some catch-alls that a standard verifier cannot, or it may be generous; ten addresses cannot tell you which, and only your own bounce data will. What it does settle: Apollo's check does not flag catch-alls, so it cannot be the control that holds them back on a new sending stack.
+
+So use it where it is the convenient tool: a handful of addresses inside a conversation, an account-based list of 30 named people, a spot-check before re-engaging a small segment. For a full list, the dedicated service below stays the deciding vote, on cost and because it sorts catch-alls and unknowns apart.
 
 **Use a dedicated email-verification service, and treat it as the deciding vote.** Any data provider's own email status, Apollo's included, is a useful first filter: narrowing to verified at search time (step 1) is what stops you paying to enrich addresses you would throw away. But a provider grading its own data is not an independent check, and the two layers answer different questions. The provider tells you the address exists in its database. A verifier tells you what the receiving mail server will actually do today.
 

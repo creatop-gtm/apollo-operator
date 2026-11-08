@@ -26,7 +26,7 @@ One router skill (`operator-context`) loads first and hands off by phase. A phas
 
 **Launch** (`apollo-go-live`): enroll, a human approves, contacts pull on reply, and there is a kill switch for when something goes wrong.
 
-**Iterate** (`positive-reply-scoring`, `experiment-design`, `weekly-rhythm`, `re-engagement`): measure intent, run clean experiments, keep a cadence, and go back to the 90% who never replied.
+**Iterate** (`positive-reply-scoring`, `experiment-design`, `weekly-rhythm`, `re-engagement`): measure intent, run clean experiments, keep a cadence (including which checks are safe to run on a schedule), and go back to the 90% who never replied.
 
 **Signals** (cross-cutting, `apollo-signals`): find the reason to reach out now.
 

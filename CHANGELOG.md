@@ -5,8 +5,12 @@ All notable changes to Apollo Operator are documented here. This project uses
 
 ## Unreleased
 
-**Kept current with Apollo's MCP and CLI as of 2026-11-08.** Apollo now serves one MCP endpoint, has
-published several new tools, and CLI v2.2.0 added many of the advanced search filters. Same 20 skills.
+## v1.5.0 (2026-11-08)
+
+**Current with Apollo's MCP and CLI as of 2026-11-08.** Apollo now serves one MCP endpoint, has
+published several new tools, and CLI v2.2.0 added many of the advanced search filters. This release
+brings the library up to date, adds the new tools where they fit in the motion, and says which
+checks are safe to run on a schedule. Same 20 skills, in Claude Code, Codex, and any AI chat.
 
 ### Kept current
 
@@ -37,6 +41,23 @@ published several new tools, and CLI v2.2.0 added many of the advanced search fi
 - **Per-contact step copy** (`step_content_overrides` at enrollment, plus `step_content` and
   `update_step_content`), a direct route to individual emails without a custom field.
 - **Website tracker install script** in the account audit and Signals.
+- **Running checks unattended** (`weekly-rhythm`). With a master API key the MCP runs on a timer. The
+  new section lists the reads that are safe to schedule (audit, reporting, bounce watch, mailbox
+  health, credit balance), what must stay with a person (enrollment, activation, stopping a
+  sequence, anything that spends credits, record writes and merges, copy, the agent tools), and how
+  to handle the key.
+
+### Measured
+
+- **Apollo's email validation beside an independent verifier**, ten addresses: they agreed on four
+  safe and two invalid, and Apollo returned `validated` for three catch-all addresses and one the
+  verifier could not reach. Nine lead credits for ten addresses. The list builder keeps the
+  independent verifier as the deciding vote for lists.
+- **Per-contact step copy, end to end** on an inactive test sequence: set at enrollment, read back,
+  updated and cleared in one call, and skipped on a second enrollment, all as Apollo documents. Merge
+  tags are not substituted inside it, so write the resolved text.
+- **An empty subject on a later step** is rejected by `apollo_sequences_create` on the MCP, so repeat
+  step 1's subject there. The CLI still accepts it.
 
 ### Fixed
 
@@ -48,7 +69,7 @@ published several new tools, and CLI v2.2.0 added many of the advanced search fi
 - **README and marketplace descriptions** now say the skills run in Claude Code, Codex, and any AI
   chat, not Claude Code only.
 
-The Codex plugin in `plugins/apollo-operator/` is rebuilt from these files at the next release.
+The Codex plugin in `plugins/apollo-operator/` is rebuilt from the same files.
 
 ## v1.4.2 (2026-09-29)
 
