@@ -45,13 +45,13 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 **Targeting and search**
 - `apollo_mixed_people_api_search`: find people by title, seniority, department, location, headcount, keywords. Primary prospecting call.
 - `apollo_mixed_companies_search`: find target companies (firmographics, tech, signals).
-- `apollo_contacts_search`: search contacts already in the account.
+- `apollo_contacts_search`: search contacts already in the account. **Always send `response_format: "concise"` or `fields`.** Leave both out and you get the full record, nested account and organization included. Measured 2026-11-09 at 100 contacts a page: full record 306 KB, `concise` 66 KB, `fields: [{"contacts": ["id"]}]` 4 KB. Three traps, all verified that day: a misspelt field name is dropped without an error; a field that is empty on a contact is left out rather than returned as null, so a missing `linkedin_url` means "none", not "not asked for"; and `response_format: "detailed"` overrides `fields`. Pagination comes back either way.
 - `apollo_fields_index`: list filterable and mappable fields.
 
 **Enrichment**
 - `apollo_people_match` / `apollo_people_bulk_match`: enrich a person (email, phone, verified data). Also carries `reveal_phone_number`, `run_waterfall_email`, and `run_waterfall_phone`, all **asynchronous**: they return a `request_id` and you poll `apollo_webhook_result_show`. Waterfall costs vary by plan and provider, so never quote a fixed number.
 - `apollo_webhook_result_show`: collects async results. **Confirm it exists before starting any reveal, waterfall, or validation**, or you spend credits on a result you cannot fetch.
-- `apollo_email_validation_validate` / `apollo_phone_validation_validate`: Apollo's own deliverability check on addresses or numbers you already have, up to 10 per call, asynchronous like the waterfall. **Up to 1 lead credit per address**, sometimes 0, and a repeat check inside the cache window is still charged. A `not_validated` verdict is not a bad address: it also covers catch-all domains and checks with no verdict. Where it fits beside an independent verifier: `apollo-list-builder` step 7.
+- `apollo_email_validation_validate` / `apollo_phone_validation_validate`: Apollo's own deliverability check on addresses or numbers you already have, up to 10 per call, asynchronous like the waterfall. **Up to 1 lead credit per address**, sometimes 0, and a repeat check inside the cache window is still charged. A `not_validated` verdict is not a bad address: it also covers catch-all domains and checks with no verdict. Also on the public API (`POST /api/v1/enrich`, API key only). Where it fits beside an independent verifier, and the REST recipe: `apollo-list-builder` step 7.
 - `apollo_organizations_enrich` / `apollo_organizations_bulk_enrich`: enrich a company. **1 lead credit per company** (measured 2026-09-14), and the only way to read funding stage and date, since person enrichment does not carry them.
 - `apollo_organizations_lookup`: **free** organization discovery (fuzzy name lookup, shallow records). Prefer it over the paid company search when you only need to resolve an id.
 - `apollo_organizations_job_postings`: a company's open roles (a hiring signal). 1 credit per call.
@@ -71,7 +71,7 @@ Do not guess which tool to call. This is the surface the MCP can act on directly
 **Sequences and sending**
 - `apollo_sequences_create` / `update`: build or edit a sequence (steps and cadence). **`update` is declarative**: every step, touch, and template id you omit is deleted. It also takes `active`, so it can stop a live sequence.
 - `apollo_emailer_campaigns_search`: find existing sequences.
-- `apollo_emailer_campaigns_show`: read one sequence in full, every step, subject, and body. Call it before any `update`.
+- `apollo_emailer_campaigns_show`: read one sequence in full, every step, subject, and body. Call it before any `update`. It also carries `sending_diagnostics`, Apollo's own answer to "will this send": the schedule and its timezone, `email_steps_without_approved_template` (a count), and `issues`, a list such as `sequence_inactive` and `no_schedule` (verified 2026-11-09). Sequence search returns it as null, so read it per sequence with `show`.
 - `apollo_emailer_campaigns_add_contact_ids`: enroll contacts. Takes `step_content_overrides` to give each contact their own subject and body on chosen steps, applied only to contacts the call actually enrolls.
 - `apollo_emailer_campaigns_step_content` / `update_step_content`: read, then change or clear, one enrolled contact's own step copy without re-enrolling them. A step already sent cannot be edited. See `apollo-sequence-builder`.
 - `apollo_emailer_campaigns_remove_or_stop_contact_ids`: pull contacts out (on any reply or bounce).

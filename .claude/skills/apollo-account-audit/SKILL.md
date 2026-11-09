@@ -40,7 +40,7 @@ Run them in this order, since the early ones explain the later ones. Grade each 
 
 ### The finding that looks like a performance problem and is not
 
-**A sequence can be active, with contacts enrolled, and send nothing, because its touches are not approved.** Verified 2026-09-14: an active sequence with 5 enrolled contacts had scheduled zero emails in two weeks, and all six of its touches carried `status: "to_be_reviewed"`. Apollo's schema says `approved` means ready to send; `to_be_reviewed` is for workflows that need a human to review first. It reads as a dead campaign in any report. Check touch status before diagnosing copy, lists, or deliverability.
+**A sequence can be active, with contacts enrolled, and send nothing, because its touches are not approved.** Verified 2026-09-14: an active sequence with 5 enrolled contacts had scheduled zero emails in two weeks, and all six of its touches carried `status: "to_be_reviewed"`. Apollo's schema says `approved` means ready to send; `to_be_reviewed` is for workflows that need a human to review first. It reads as a dead campaign in any report. Check touch status before diagnosing copy, lists, or deliverability. **Start with `sending_diagnostics`** on `apollo_emailer_campaigns_show`: `email_steps_without_approved_template` counts exactly this problem, and `issues` lists the others Apollo can see, such as `no_schedule` (verified 2026-11-09 on inactive sequences; sequence search returns it as null, so read each sequence with `show`).
 
 Approving touches starts real email, so the audit reports it and stops. The operator decides.
 

@@ -5,6 +5,30 @@ All notable changes to Apollo Operator are documented here. This project uses
 
 ## Unreleased
 
+### Kept current (2026-11-09)
+
+Checked live against Apollo's MCP and API as of 2026-11-09. Corrections only, same 20 skills.
+
+- **Contact search can return far less.** `apollo_contacts_search` takes `response_format: "concise"`
+  or a `fields` list. At 100 contacts a page the full record measured 306 KB, concise 66 KB, and ids
+  only 4 KB. The full record is still the default, a misspelt field is dropped without an error, and
+  empty fields are left out. Go-live now collects contact ids this way.
+- **Email and phone validation on the public API.** `POST /api/v1/enrich` with `poll_only`, then
+  `GET /webhook_result/{id}`. It needs an API key, so it runs on the REST-with-key lane only. The
+  list builder documents the call, its limits, and what a check cost.
+- **Workspace enrollment criteria.** Admins can now require a verified email, phone, LinkedIn URL,
+  no other active sequence, allowed stages, or an owner before anyone adds a contact to a sequence.
+  These rules hold even when an enrollment call loosens its own guards, and the skip reason starts
+  with `enrollment_criteria_`. Go-live, the list builder, and the CLI recipes explain it.
+- **Sequence send readiness.** `apollo_emailer_campaigns_show` returns `sending_diagnostics`
+  (schedule, steps without an approved template, and a list of issues). Go-live checks it before
+  activation and the account audit starts with it.
+- **REST errors and request ids.** Some errors now carry a structured `error_details` object and
+  the old `error` key is due to retire on 2027-02-16, so read both. Async results return the
+  request id as a number and as `request_id_str`; JavaScript should keep the string.
+- **Custom field merge tags.** No `merge_variable` appears on custom fields yet, so the sequence
+  builder keeps building the tag from the field name.
+
 ## v1.5.0 (2026-11-08)
 
 **Current with Apollo's MCP and CLI as of 2026-11-08.** Apollo now serves one MCP endpoint, has

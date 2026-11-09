@@ -252,6 +252,10 @@ Our **verified recipes**, response-shape gotchas, and the enrollment guard flags
 
 Credits are not the only ceiling. `POST /usage_stats/api_usage_stats` (REST) returns **usage and rate limits together**, per endpoint, and it is the only place to see them.
 
+**Read errors from both keys for now.** Apollo is moving REST errors to a structured `error_details` object (`code`, `message`, `suggestions`) and retiring the old `error` key on 2027-02-16; responses that have moved say so in a `deprecation` block. On 2026-11-09 only some had moved: a bad API key returned `error_details` (`AUTH.AUTHENTICATION.API_KEY_INVALID`), while a `422` for a wrong parameter type, a `404` for a missing sequence, and a `422` from `/enrich` returned only `error`. Read `error_details` when it is there and fall back to `error`, then `message`.
+
+**Async request ids: take the string.** `GET /webhook_result/{id}` returns `request_id` as a 19-digit number and `request_id_str` as a string (2026-11-09). JavaScript rounds the number, so a script in JS must keep `request_id_str`.
+
 Check it before scripting a long run, because the failure mode is silent: a burst gets throttled, and if your script treats a non-200 as a result rather than a retry, you record garbage. That is exactly how a verification run in testing recorded 25 of 30 responses as valid when they were rejections.
 
 Practical defaults that have held up in real runs: a **0.2 to 0.4 second sleep between paginated calls**, a small worker pool rather than a burst for anything parallel, retry on anything that is not an explicit success, and never treat a `200` as proof (several APIs, Apollo included, return `200` with a failure flag in the body).

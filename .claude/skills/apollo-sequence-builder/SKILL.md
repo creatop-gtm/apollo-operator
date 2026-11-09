@@ -135,7 +135,7 @@ If you have a CSV with an `opener` or `email_body` column, that column is the in
   "typed_custom_fields": { "<field_id>": "Saw you're hiring two SDRs in Austin, most founders…" } }
 ```
 
-**3. Reference it by name in the step template.** In `body_html`, write `{{custom_email_body_seq_1}}` using the field's **name**, not its id. Mix it with normal tags freely:
+**3. Reference it by name in the step template.** In `body_html`, write `{{custom_email_body_seq_1}}` using the field's **name**, not its id. Custom fields are due to return a ready-made `merge_variable`, but on 2026-11-09 none of `apollo_fields_index`, REST `GET /fields`, or `GET /typed_custom_fields` carried one on a live account, so keep building the tag from the name until you see it in a response. Mix it with normal tags freely:
 
 ```html
 <div>Hi {{first_name}},</div><div><br /></div>

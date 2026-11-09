@@ -256,6 +256,12 @@ unless you have a stated reason:
 | `--no-email` | Enrolls contacts with no email at all |
 | `--skip-verification` | Skips the verification step entirely |
 
+These flags only loosen the call's own guard. **A workspace's enrollment criteria, set by an admin in
+Settings, Outbound, Sequences, still apply**: on 2026-11-09 the MCP's
+`sequence_active_in_other_campaigns: true`, the counterpart of `--active-in-other`, was overruled by
+the admin rule, skip reason `enrollment_criteria_active_in_other_sequence`. Tested over MCP only,
+not from the CLI. See `apollo-go-live`.
+
 A clean list still produces a bounce spike if you pass `--skip-verification` or
 `--unverified-email` at enrollment. See `apollo-list-builder`
 for the list-side half of suppression.
