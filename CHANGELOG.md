@@ -16,6 +16,8 @@ Checked live against Apollo's MCP and API as of 2026-11-09. Corrections only, sa
 - **Email and phone validation on the public API.** `POST /api/v1/enrich` with `poll_only`, then
   `GET /webhook_result/{id}`. It needs an API key, so it runs on the REST-with-key lane only. The
   list builder documents the call, its limits, and what a check cost.
+  It also records that `validated` does not rule out a catch-all domain, so catch-all stays a
+  separate signal to take from your own verifier.
 - **Workspace enrollment criteria.** Admins can now require a verified email, phone, LinkedIn URL,
   no other active sequence, allowed stages, or an owner before anyone adds a contact to a sequence.
   These rules hold even when an enrollment call loosens its own guards, and the skip reason starts
