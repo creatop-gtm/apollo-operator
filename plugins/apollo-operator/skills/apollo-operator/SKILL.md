@@ -15,7 +15,7 @@ All four hit the same Apollo API: the same data, enrichment, sequences, and CRM.
 
 | Lane | How work is invoked | Auth | Results go | Best for |
 |---|---|---|---|---|
-| **1. MCP** (library default) | Apollo appears as tools inside the model's context, at `https://mcp.apollo.io/mcp`. The full catalog loads up front (96 tools on 2026-11-08, and growing) | OAuth 2.0 through the registered connector | **Through context, always** | Guardrailed, human-gated, in-conversation steps on small record counts |
+| **1. MCP** (library default) | Apollo appears as tools inside the model's context, at `https://mcp.apollo.io/mcp`. The full catalog loads up front (96 tools on 2026-11-08, and growing) | OAuth 2.0 through the registered connector | **Through context**, except a CSV that Apollo's agent exports, which arrives as a download link (2026-11-22) | Guardrailed, human-gated, in-conversation steps on small record counts |
 | **2. CLI binary** | A normal terminal command an agent shells out to, or a human, script, or cron runs | OAuth 2.0 (`apollo auth login`) | **To disk** | Bulk search and enrich with common filters, composable pipelines, reproducible jobs |
 | **3. REST + the CLI's own token** | `curl` against the same endpoint the MCP uses, authenticated with the token `apollo auth login` already stored | OAuth 2.0, **reuses the CLI's token, no API key** | **To disk** | **Bulk work that needs advanced filters.** The full MCP filter surface with the CLI's disk output. |
 | **4. REST + an API key** | You build your own client against the HTTP endpoints | Separate integration context only; not an execution route in this toolkit | Wherever you send them | Back-end services and integrations that run without a logged-in user |
@@ -32,7 +32,7 @@ Apollo explicitly warns not to confuse API access with MCP. They are different l
 
 For an assistant with an authorized terminal, the decision is MCP or CLI. A chat without a terminal uses the connector-only instructions.
 
-- **MCP** (`/mcp`) loads every tool schema into the model's context whether you use them or not: 74 tools and 344 KB on 2026-09-14, 85 tools and 485 KB on 2026-09-25, **96 tools and about 526 KB on 2026-11-08**. The v2 router that loaded four tools instead is retired (see below). In return you get typed, structured, in-conversation calls the model cannot fat-finger.
+- **MCP** (`/mcp`) loads every tool schema into the model's context whether you use them or not: 74 tools and 344 KB on 2026-09-14, 85 tools and 485 KB on 2026-09-25, **96 tools and about 526 KB on 2026-11-08**, 98 tools and about 583 KB on 2026-11-22. The v2 router that loaded four tools instead is retired (see below). In return you get typed, structured, in-conversation calls the model cannot fat-finger.
 - **CLI** loads nothing upfront. The agent runs `apollo --help` on demand, then composes commands. It is deterministic (same command, same result), scriptable, version-controllable, and it runs with or without an AI in the loop.
 
 The one-liner: **MCP puts Apollo *inside* the model as tools. The CLI puts Apollo *under* the agent as a composable command it can pipe, script, and re-run.**
@@ -223,6 +223,10 @@ Our **verified recipes**, response-shape gotchas, and the enrollment guard flags
 ## Rate limits and usage
 
 Credits are not the only ceiling. `POST /usage_stats/api_usage_stats` (REST) returns **usage and rate limits together**, per endpoint, and it is the only place to see them.
+
+**Read errors from both keys for now.** Apollo is moving REST errors to a structured `error_details` object (`code`, `message`, `suggestions`) and retiring the old `error` key on 2027-02-16; responses that have moved say so in a `deprecation` block. On 2026-11-09 only some had moved: a bad API key returned `error_details` (`AUTH.AUTHENTICATION.API_KEY_INVALID`), while a `422` for a wrong parameter type, a `404` for a missing sequence, and a `422` from `/enrich` returned only `error`. Read `error_details` when it is there and fall back to `error`, then `message`.
+
+**Async request ids: take the string.** `GET /webhook_result/{id}` returns `request_id` as a 19-digit number and `request_id_str` as a string (2026-11-09). JavaScript rounds the number, so a script in JS must keep `request_id_str`.
 
 Check it before scripting a long run, because the failure mode is silent: a burst gets throttled, and if your script treats a non-200 as a result rather than a retry, you record garbage. That is exactly how a verification run in testing recorded 25 of 30 responses as valid when they were rejections.
 

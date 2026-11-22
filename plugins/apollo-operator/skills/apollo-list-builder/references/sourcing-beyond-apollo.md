@@ -14,6 +14,7 @@
 
 - **Apollo first.** It is the automated path and covers most B2B software and services targets well.
 - **Go manual when Apollo is thin or wrong** for the segment: very small local businesses, a specific event's attendees, a licensed profession, a niche vertical.
+- **For a first look at a local segment**, a discovered `apollo_agent_find_prospects` action can return Google Maps listings with address, rating, and website. Offer it under the operator-choice, effect, cost, and approval rule. A complete local list is still a Maps job.
 - **Whatever the source, the rest of the pipeline is the same:** dedupe, enrich, verify, apply your scoring signals, and grade with `list-quality-scorecard` before anything gets sent. A list from a directory still has to pass the same bar as a list from Apollo.
 
 A trade-show exhibitor list is worth calling out: attendance is a genuine buying signal when you sell to that audience, which is exactly the "a signal is only as good as its offer fit" idea from `outbound-principles.md`.
