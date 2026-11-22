@@ -3,11 +3,43 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
-## Unreleased
+## v1.5.1 (2026-11-22)
+
+**Current with Apollo's MCP and API as of 2026-11-22.** Corrections only, same 20 skills. Everything
+here was checked live on a real Apollo account before it was written down.
+
+### Kept current (2026-11-22)
+
+- **Agent tasks read `next_action`.** Apollo's agent tools now return `next_action` (`poll_again`,
+  `waiting_on_async_operation`, `inspect_and_decide`, `task_busy`, `failed`) in place of a status,
+  and the wait between polls starts at 15 seconds and lengthens on a long task. The agent tools send
+  instructions only; progress is read with `apollo_agent_poll_task`, or `POST /api/v1/agents/poll_task`
+  on REST. The lanes skill and the start-here skill describe the new loop.
+- **Files from the agent arrive as download links.** A CSV the agent exports comes back in
+  `artifacts[]` as a link that downloads without a login for about ten minutes, so the rows do not
+  pass through the model's context. The lanes skill records what an export cost: nothing for
+  contacts already saved, one credit per contact for people not saved yet, and a copy by email and
+  Slack to the account owner.
+- **Campaign planning returns a full draft.** `apollo_agent_plan_gtm_campaign` now builds one
+  sequence with researched leads and email previews and returns the review card in the response.
+  The lanes skill says what came back, how large it was, and that approving it is the operator's
+  decision.
+- **Mailbox owner and sender name.** `apollo_email_account_purchase_create` takes
+  `assigned_user_id`, `first_name`, and `last_name` per mailbox. The infrastructure skill explains
+  when to set them.
+- **Inferred company attributes.** The agent can search on attributes such as a compliance
+  certification and states its own accuracy range. The ICP builder says how to treat that kind of
+  filter.
+- **Local businesses.** The agent can return Google Maps listings for a local segment. The sourcing
+  reference says what a first look returns.
+- **Website visitors, run on a live tracker.** The signals skill adds the free ways to read visitor
+  data (the agent, and a visit rollup per company) and what each returns. The account audit reads
+  `last_data_received_at` to decide whether a tracker is live, and account-based outbound no longer
+  routes visitor filters through the free company lookup.
 
 ### Kept current (2026-11-09)
 
-Checked live against Apollo's MCP and API as of 2026-11-09. Corrections only, same 20 skills.
+Checked live against Apollo's MCP and API as of 2026-11-09.
 
 - **Contact search can return far less.** `apollo_contacts_search` takes `response_format: "concise"`
   or a `fields` list. At 100 contacts a page the full record measured 306 KB, concise 66 KB, and ids

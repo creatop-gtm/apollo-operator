@@ -70,6 +70,15 @@ Three limits to state plainly before building an angle on this, because two of t
 
 **The script has to be live and verified.** One pixel covers both tracking modes, so there is nothing to change later when person-level is enabled. But the domain sits `Inactive` with "Failed to connect: check your script" until Apollo can actually see it, and an inactive domain yields no data while still counting against the domain limit (three on a standard plan). Read tracked domains and intent paths from `apollo_website_visitor_domain_tracker_index` rather than typing them from memory, and confirm status is active before trusting an empty result. The tracker tools are all on the MCP (2026-11-08): `index`, `install_script`, `send_install_email`, and `add_domain`, `edit_domain`, and `delete_domain`, plus `apollo_website_visitors_domain_aggregates` for the rollup. **Get the snippet from `install_script`**, which returns it with the team's id already filled in and the placement rules a correct install must meet, rather than assembling it by hand. One script covers every tracked domain.
 
+**Run on a live tracker, 2026-11-22.** Four things the day-one data on our own site showed:
+
+- **`data_received: false` does not mean no data.** The tracker index still showed it hours after the first visits, with `last_data_received_at` set to that morning and three companies already identified. Go by `last_data_received_at` and a real query.
+- **The free company lookup cannot answer this.** `apollo_organizations_lookup` lists the company-level visitor filters in its schema but did not apply them on this date: each combination, including a domain we do not track, returned the same default list as a call with no filters. That leaves `apollo_mixed_companies_search`, which bills a credit per page, or the agent.
+- **The agent is the free route to the list.** Asked through `apollo_agent_find_prospects` which companies visited the site in the last seven days, preview only, it returned the three companies with their Apollo ids in 31 seconds and moved no credit pool.
+- **The per-company rollup is free too.** With an organization id, `apollo_website_visitors_domain_aggregates` returns `total_visits`, `unique_visitors`, a count per day, `top_paths`, Apollo's `intent`, and first and last visit dates. `domain` is your tracked site, not the visitor's. A company that never visited returns `stats not found`.
+
+Each identified company draws on `inbound_website_visitor_credit` (three companies, three of the 100 on this plan), whether or not it is a buyer. All three of ours were one homepage visit rated low intent, so read the rollup before treating an identified company as a signal.
+
 None of it has a CLI flag, so a large visitor-based pull belongs on lane 3 with the full payload.
 
 This is the strongest offer-fit signal in the menu, because someone reading your pricing page has already told you what they want. It also needs no guessing: it is your own data. Gated on having the tracking script installed, so ask before promising it.
