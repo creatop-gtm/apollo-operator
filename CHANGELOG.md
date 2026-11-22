@@ -24,6 +24,11 @@ here was checked live on a real Apollo account before it was written down.
   sequence with researched leads and email previews and returns the review card in the response.
   The lanes skill says what came back, how large it was, and that approving it is the operator's
   decision.
+- **Apollo's agent on deliverability, enrichment, and sequence review.** Three more agent tools were
+  run and written up where they fit: what the deliverability diagnosis returned and what to settle
+  before acting on its plan (`apollo-deliverability`), what a bulk enrich quotes and how to ask for
+  the lower-cost route (`apollo-list-builder`), and how sequence optimization answers on a sequence
+  with little send history (`apollo-sequence-builder`).
 - **Mailbox owner and sender name.** `apollo_email_account_purchase_create` takes
   `assigned_user_id`, `first_name`, and `last_name` per mailbox. The infrastructure skill explains
   when to set them.
