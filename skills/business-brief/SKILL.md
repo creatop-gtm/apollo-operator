@@ -119,7 +119,7 @@ Apollo has a native, team-wide home for exactly this information: the **Context 
 | Competitive frame | `primary_competitors` |
 | The ask | `call_to_action` |
 
-Tools: `apollo_context_center_show` to read (**always read before writing**), `apollo_context_center_create_profile` / `update_profile` for the ICP, and `apollo_context_center_create_product` / `update_product` for each offering.
+Tools: `apollo_context_center_show` to read (**always read before writing**), `apollo_context_center_create_profile` / `update_profile` for the ICP, and `apollo_context_center_create_product` / `update_product` for each offering. `apollo_context_center_update_product_selection` picks which products Apollo's AI writes for: the selection becomes the operator's default for every new agent task and new sequence. Tested 2026-11-24: with one product selected, a sequence-drafting task read that product's profile and wrote for it. **It cannot be read back:** `apollo_context_center_show` reports the team default (`is_default`) whatever is selected, so say which products you selected, by name, and set it back when the task is done. Only change it when the operator names the products.
 
 **Worth doing**, because it means the brief stops being a file only this library reads and starts powering Apollo's own AI too, for everyone on the team.
 

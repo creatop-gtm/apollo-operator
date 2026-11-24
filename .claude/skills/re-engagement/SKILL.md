@@ -28,7 +28,7 @@ What re-engagement is **not**: sending the same sequence again with a different 
 
 Three hard exclusions, no matter how much time has passed:
 
-- **Anyone who replied "not interested", asked to stop, or unsubscribed.** Permanent. Not a timing problem. Apollo's own unsubscribe handling only covers its sequences, so these people must be in the suppression file too (see `compliance.md`).
+- **Anyone who replied "not interested", asked to stop, or unsubscribed.** Permanent. Not a timing problem. Apollo's own unsubscribe handling only covers its sequences, so these people must be in the suppression file too (see `compliance.md`). Check Apollo's own record as well before re-enrolling: a contact search returns `email_unsubscribed: true` for anyone opted out, and `contact_stage_ids` with the ids from `apollo_contact_stages_index` pulls out a stage such as Not Interested or Do Not Contact.
 - **Anyone who bounced.** Re-sending to a bad address a second time is how a domain dies twice.
 - **Anyone currently in another live sequence.** Check before enrolling, not after.
 

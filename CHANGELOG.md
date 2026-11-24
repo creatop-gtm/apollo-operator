@@ -3,6 +3,30 @@
 All notable changes to Apollo Operator are documented here. This project uses
 [semantic versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## v1.5.2 (2026-11-24)
+
+**Current with Apollo's MCP and API as of 2026-11-24.** Corrections only, same 20 skills. Everything
+here was checked live on a real Apollo account before it was written down.
+
+- **Opt-outs over the MCP.** `apollo_contacts_update` takes `email_opt_out` (and `call_opted_out`),
+  and `apollo_contacts_search` returns `email_unsubscribed`. The compliance reference and
+  re-engagement use them. Search returns the field only when it is true and cannot filter on it, so
+  it is a per-contact check, and the suppression file stays the record that follows a person.
+- **Contact stages.** `apollo_contact_stages_index` lists stage ids at no cost, and
+  `contact_stage_ids` filters a contact search. Re-engagement uses it to pull out stages such as Not
+  Interested before re-enrolling. Owner and stage updates are on the MCP now and stay out of the
+  library's scope.
+- **Context Center product selection.** `apollo_context_center_update_product_selection` sets which
+  products new agent tasks and sequences write for. The business brief skill says when to change it
+  and that the selection cannot be read back.
+- **Phone validation.** Verdicts now include `questionable`, and a phone check cost eight lead
+  credits per number on the account tested. The tool map and the list builder record both.
+- **Smaller corrections.** Contact search returns its concise fields when no format is given. A
+  contact you create yourself reads `email_status: verified` without a check. The account stage list
+  that `apollo_accounts_update` refers to is not on the MCP, so stage ids come from the REST API. A
+  file the agent says it wrote may not appear in `artifacts[]`; exports still do. Apollo's status
+  page now lists the MCP and the API.
+
 ## v1.5.1 (2026-11-22)
 
 **Current with Apollo's MCP and API as of 2026-11-22.** Corrections only, same 20 skills. Everything

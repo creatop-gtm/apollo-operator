@@ -17,6 +17,7 @@ Where this reference cites Apollo's own behaviour, the source is Apollo's help c
 
 Apollo's own unsubscribe handling protects Apollo sequences. It does not follow a person into a rebuilt list, a re-enrichment, or another sending platform. So:
 
+- **Mark the person in Apollo too.** `apollo_contacts_update` with `email_opt_out: true` puts them on the team's unsubscribe list. `email_unsubscribed` on a contact search tells you whether someone already is, but only one contact at a time: search cannot filter on it, and the key is missing, not false, for everyone who has not opted out. The suppression file stays the record that follows the person everywhere.
 - **Add every unsubscribe, "not interested", and complaint to the suppression file** the moment it happens, and subtract that file from every new list before enriching (see `apollo-list-builder`, step 3).
 - **Never re-engage them**, however much time passes (see `re-engagement`).
 
