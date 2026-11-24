@@ -279,7 +279,7 @@ So "narrow to verified at search time" (step 1) and "verify independently" (this
 
 - **It costs up to 1 lead credit per address**, sometimes 0, from the same scarce pool as enrichment, and a repeat check inside the cache window is still charged. A dedicated verification service costs a fraction of a cent per address.
 - **It runs 10 addresses per call, asynchronously**, through `apollo_webhook_result_show`. The tool asks you to say an exact confirmation sentence with the count before running it.
-- **The same check also exists on Apollo's public API**, for separate service integrations that hold their own API key. It is not an execution route in this plugin: use the connector's validation action, and read both the verdict and any vendor status it returns.
+- **The same check also exists on Apollo's public API**, for separate service integrations that hold their own API key. It is not an execution route in this plugin: use the connector's validation action, and read both the verdict and any vendor status it returns. **A phone check costs far more:** five numbers took 40 lead credits on 2026-11-24, eight each, and phone verdicts now include `questionable` beside `validated` and `not_validated`.
 - **`not_validated` is not "invalid".** It also covers catch-all domains and checks that reached no verdict, so it does not separate the three buckets below.
 
 **Measured against an independent verifier, 2026-11-08.** Ten addresses an independent verifier had already graded, run through Apollo's check (the vendor that answered was LeadMagic). It cost **9 lead credits for 10 addresses**.
